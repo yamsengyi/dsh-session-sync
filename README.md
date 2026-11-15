@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.4.4` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.4.5` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -67,7 +67,10 @@ After reloading DSH, open **Settings → Session sync**:
   unpair.
 - **Workspace** (Client/Both) — type a path or fill it from the current session,
   then mark the folder (`.dsh-sync.json`). Known workspaces are listed with a
-  **공유** (shared on this PC) or **로컬** badge.
+  **공유** (shared on this PC) or **로컬** badge. With no saved selection the path
+  defaults to `~\Documents\deepseek-harness\sync-default`, which the plugin
+  creates as an empty folder; override it with `defaultWorkspace` in the bundle
+  config.
 - **Sync now** (Client/Both) — pull the hub's newest checkpoint, upload the
   existing sessions whose working directory is the marked workspace, then push
   the workspace's current state, with a result summary.
@@ -92,8 +95,10 @@ merged state**, not one folder per version. The first pull has no common base:
   the local file stays, and the remote copy is saved under
   `.dsh-sync/conflicts/<stamp>/...` (ignored by later checkpoints).
 
-The Settings page lists known workspaces with a **공유** or **로컬** badge. A
-new empty folder such as `sync-default` is still the safest choice.
+The plugin's `defaultWorkspace` config (bundle default
+`~\Documents\deepseek-harness\sync-default`) is created empty on load and appears
+in the workspace list even before it is marked. A new empty folder is still the
+safest first-sync target.
 
 ## Default workspace vs shared workspace
 

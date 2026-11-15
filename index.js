@@ -68,6 +68,8 @@ function normalizeConfig(raw) {
     checkpointIntervalMs: Number.isFinite(Number(config.checkpointIntervalMs))
       ? Math.max(0, Number(config.checkpointIntervalMs))
       : 30_000,
+    defaultWorkspace: String(config.defaultWorkspace ?? '')
+      || join(homedir(), 'Documents', 'deepseek-harness', 'sync-default'),
     deviceName: String(config.deviceName ?? '') || hostname(),
   }
 }
@@ -159,6 +161,12 @@ export async function apply(ctx, raw) {
   const hubConfigPath = join(dataDir, 'hub.json')
   const clientConfigPath = join(dataDir, 'client.json')
   const uiStatePath = join(dataDir, 'ui.json')
+
+  // The explicit default is an empty, dedicated folder. Creating it is a no-op
+  // when it already exists; it never writes into an existing folder.
+  void mkdir(config.defaultWorkspace, { recursive: true }).catch((error) => {
+    logger.warn?.(`[session-sync] cannot create default workspace ${config.defaultWorkspace}: ${describe(error)}`)
+  })
 
   const readUi = async () => (await readJsonIfExists(uiStatePath)) ?? {}
   const updateUi = async (patch) => {
@@ -583,6 +591,9 @@ export async function apply(ctx, raw) {
     if (ui.workspacePath && !seen.has(ui.workspacePath)) {
       seen.set(ui.workspacePath, { path: ui.workspacePath, sessions: 0, lastAt: 0 })
     }
+    if (!seen.has(config.defaultWorkspace)) {
+      seen.set(config.defaultWorkspace, { path: config.defaultWorkspace, sessions: 0, lastAt: 0 })
+    }
     const workspaces = []
     for (const item of seen.values()) {
       let marker
@@ -658,6 +669,7 @@ export async function apply(ctx, raw) {
         baseline,
         nonEmpty,
       },
+      defaultWorkspace: config.defaultWorkspace,
       currentPath: await currentPath(),
       knownWorkspaces: await listKnownWorkspaces(),
       lastSync: ui.lastSync ?? null,

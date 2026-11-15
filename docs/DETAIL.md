@@ -84,7 +84,7 @@ sync**. It controls the same markers the commands write:
 | Mode (Host / Client / Both / Off) + Apply | writes `enabled` flags into `hub.json` / `client.json`; the other role's settings and token are preserved |
 | Host port + bind (Host/Both) | updates `hub.json` and starts/stops the hub; shows the pairing code |
 | Client target URL + code + name (Client/Both) | pairs against a hub, writes `client.json`, starts/stops the client |
-| Workspace path + current session (Client/Both) | writes `.dsh-sync.json` into the chosen folder; the known-workspace list marks each row 공유 or 로컬 |
+| Workspace path + current session (Client/Both) | writes `.dsh-sync.json` into the chosen folder; the known-workspace list marks each row 공유 or 로컬. The unset default is `~\Documents\deepseek-harness\sync-default`, created empty on load |
 | Sync now (Client/Both) | pulls the hub's newest checkpoint, uploads existing sessions for the marked workspace, then pushes the local workspace |
 
 The mode selection is a draft; **Apply** commits it, and the current running
@@ -112,8 +112,11 @@ versions. When a pull has no usable local base:
 - a same-path difference keeps the local file and stores the remote blob under
   `.dsh-sync/conflicts/<stamp>/<path>`, which the checkpoint ignore rules skip.
 
-The Settings page lists known workspaces and marks each one 공유 or 로컬. A new
-empty folder is still the safest first-sync target.
+The Settings page lists known workspaces and marks each one 공유 or 로컬. The
+`defaultWorkspace` config defaults to `~\Documents\deepseek-harness\sync-default`;
+the plugin creates that folder empty on load, so a fresh install always has the
+same explicit default option. Override it with a fully qualified path when the
+account's Documents folder is redirected.
 
 ## Default workspace vs shared workspace
 

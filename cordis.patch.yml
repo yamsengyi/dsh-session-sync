@@ -21,4 +21,5 @@
         autoPush: true
         autoCheckpoint: true
         checkpointIntervalMs: 30000
+        defaultWorkspace: ''
         deviceName: ''

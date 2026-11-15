@@ -63,7 +63,7 @@ window.__ModuleLoader__.load({
         if (!initialized) {
           setHostEnabled(Boolean(next.hub.configured))
           setHostPort(String(next.hub.port ?? 8787))
-          setHostBind(next.hub.host === '0.0.0.0' ? '0.0.0.0' : '127.0.0.1')
+          setHostBind(next.hub.host ?? '127.0.0.1')
           setTarget(next.client.hubUrl ?? hostUrl(next))
           setCode(next.hub.pairingCode ?? '')
           setName(next.client.deviceName ?? '')
@@ -159,10 +159,11 @@ window.__ModuleLoader__.load({
                 onChange: (event) => setHostPort(event.target.value), style: styles.input,
               })),
             h('label', { style: styles.field },
-              h('span', { style: styles.label }, '바인딩'),
-              h('select', { value: hostBind, onChange: (event) => setHostBind(event.target.value), style: styles.input },
-                h('option', { value: '127.0.0.1' }, '로컬만 (127.0.0.1)'),
-                h('option', { value: '0.0.0.0' }, 'LAN 공개 (0.0.0.0)'))),
+              h('span', { style: styles.label }, '바인딩 주소'),
+              h('input', {
+                value: hostBind, placeholder: '127.0.0.1',
+                onChange: (event) => setHostBind(event.target.value), style: styles.input,
+              })),
           ),
           h('div', { style: styles.row },
             h('button', { style: styles.button, disabled: Boolean(busy), onClick: applyHost }, hostEnabled ? '호스트 적용' : '호스트 끄기')),

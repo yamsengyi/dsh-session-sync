@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.4.6` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.5.0` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -57,6 +57,9 @@ machine's DSH agent. The Korean version is
 
 After reloading DSH, open **Settings → Session sync**:
 
+- **Language** — **Auto** follows the DSH interface language
+  (`<html lang>`); English, 中文, and 한국어 can be selected explicitly. The
+  choice is stored per browser and never defaults to Korean.
 - **Mode** — choose Host, Client, Both, or Off. The choice is a draft; the
   **Apply** button commits it. The current running state is shown beside it, so
   a toggle never starts or stops the hub on its own.

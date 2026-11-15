@@ -138,6 +138,19 @@ the highest stable tag with its own version and reports `updateAvailable`; a
 network failure is reported as text and never blocks settings. Each installed
 profile checks independently, so every PC can see whether its bundle is behind.
 
+## UI language
+
+The section reads the DSH document language (`<html lang>`, which the client
+locale plugin keeps in sync) and falls back to English, then to Chinese or
+Korean only when that is the detected language. A per-browser selector offers
+**Auto (DSH)**, **English**, **中文**, and **한국어**; the explicit choice is stored
+in `localStorage` under `dsh-session-sync.locale`. There is no hardcoded Korean
+default. The section title stays the language-neutral brand `Session sync`.
+
+The dictionary covers all labels, hints, buttons, sync summaries, and the
+common Host error codes. A network failure in the update check is reported in
+the selected language with the raw detail appended.
+
 ## Opting a workspace in
 
 Automatic commits only touch a workspace that carries `.dsh-sync.json` at its

@@ -101,6 +101,21 @@ Mode switches use the marker files, so they require `role: auto` (the bundle
 default). An explicit `role: hub` or `role: client` override in a profile patch
 wins over the markers and makes the host/client toggles ineffective.
 
+## First sync and existing files
+
+A folder can hold existing work and previously pulled checkpoints at the same
+time. The working tree is a single merged state; the hub keeps the numbered
+versions. When a pull has no usable local base:
+
+- a local-only file is kept, even though the remote manifest lacks it;
+- a remote-only file is written;
+- a same-path difference keeps the local file and stores the remote blob under
+  `.dsh-sync/conflicts/<stamp>/<path>`, which the checkpoint ignore rules skip.
+
+The Settings page reports whether the marked workspace has a baseline and
+whether it already contains entries, and warns when a first pull is about to
+merge into a non-empty folder.
+
 ## Default workspace vs shared workspace
 
 The first-use workspace at `<Documents>\deepseek-harness\default-workspace` is

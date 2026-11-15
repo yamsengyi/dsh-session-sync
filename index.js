@@ -13,12 +13,16 @@
 
 import { hostname, homedir } from 'node:os'
 import { watch } from 'node:fs'
-import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import { basename, join } from 'node:path'
 import { createHubServer } from './src/hub-server.js'
 import { SyncClient } from './src/sync-client.js'
-import { SyncHttpError, sha256Hex } from './src/protocol.js'
+import { PROTOCOL_VERSION, SyncHttpError, sha256Hex } from './src/protocol.js'
 import { createSessionSyncRoutes } from './src/ui-api.js'
+
+const require = createRequire(import.meta.url)
+const PLUGIN_VERSION = require('./package.json').version
 
 export const name = 'session-sync'
 
@@ -565,11 +569,24 @@ export async function apply(ctx, raw) {
     const clientConfig = await readJsonIfExists(clientConfigPath)
     const ui = await readUi()
     let marker
+    let baseline = false
+    let nonEmpty = false
     if (ui.workspacePath) {
       try {
         marker = await readMarker(ui.workspacePath)
       } catch {
         marker = undefined
+      }
+      try {
+        baseline = await stat(join(ui.workspacePath, '.dsh-sync', 'base.json')).then(() => true, () => false)
+      } catch {
+        baseline = false
+      }
+      try {
+        const entries = await readdir(ui.workspacePath, { withFileTypes: true })
+        nonEmpty = entries.some((entry) => entry.name !== '.dsh-sync' && entry.name !== '.dsh-sync.json')
+      } catch {
+        nonEmpty = false
       }
     }
     const runningHub = runtime.hub
@@ -577,6 +594,8 @@ export async function apply(ctx, raw) {
     const clientEnabled = Boolean(clientConfig) && clientConfig.enabled !== false
     const mode = hubEnabled && clientEnabled ? 'both' : hubEnabled ? 'host' : clientEnabled ? 'client' : 'off'
     return {
+      pluginVersion: PLUGIN_VERSION,
+      protocol: PROTOCOL_VERSION,
       mode,
       role: config.role,
       hub: {
@@ -599,6 +618,8 @@ export async function apply(ctx, raw) {
         path: ui.workspacePath ?? null,
         folderId: marker?.folderId ?? null,
         marked: Boolean(marker),
+        baseline,
+        nonEmpty,
       },
       currentPath: await currentPath(),
       lastSync: ui.lastSync ?? null,

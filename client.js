@@ -76,6 +76,7 @@ window.__ModuleLoader__.load({
       code: { fontFamily: 'ui-monospace, monospace', fontSize: 13, padding: '2px 6px', border: '1px solid rgba(127,127,127,0.35)', borderRadius: 4 },
       muted: { margin: 0, fontSize: 12, opacity: 0.7 },
       hint: { margin: 0, fontSize: 12, opacity: 0.65 },
+      warning: { margin: 0, fontSize: 12, color: '#d08a2e' },
       error: { margin: 0, fontSize: 12, color: '#d9534f' },
       notice: { margin: 0, fontSize: 12, color: '#3c9a5f' },
     }
@@ -278,6 +279,10 @@ window.__ModuleLoader__.load({
           status?.workspace?.marked
             ? h('p', { style: styles.hint }, `마커: .dsh-sync.json · folderId: ${status.workspace.folderId}`)
             : null,
+          status?.workspace?.marked && !status.workspace.baseline && status.workspace.nonEmpty
+            ? h('p', { style: styles.warning },
+              '기존 파일이 있고 동기화 기준(base)이 없습니다. 첫 Sync는 로컬에만 있는 파일을 삭제하지 않고, 같은 경로가 다르면 원격본을 .dsh-sync/conflicts에 저장합니다. 빈 폴더를 권장합니다.')
+            : null,
         ) : null,
 
         showClient ? h('section', { style: styles.section },
@@ -294,6 +299,7 @@ window.__ModuleLoader__.load({
         notice ? h('p', { style: styles.notice }, notice) : null,
         h('div', { style: styles.buttonRow },
           h('button', { style: styles.smallButton, disabled: Boolean(busy), onClick: () => run('새로고침', async () => { await refresh(); return undefined }) }, '새로고침')),
+        h('p', { style: styles.hint }, `Session sync v${status?.pluginVersion ?? '?'} · protocol ${status?.protocol ?? '?'}`),
       )
     }
 

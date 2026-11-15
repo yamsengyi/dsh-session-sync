@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.4.2` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.4.3` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -79,6 +79,20 @@ The page is a browser client that calls exact Host routes under
 `/session-sync/api/...`. Connection authenticates every request as the browser
 Peer; the bundle stays build-free. The `/session-sync` commands remain for
 automation.
+
+### First sync and existing files
+
+A hub keeps numbered checkpoint versions, but the working folder holds **one
+merged state**, not one folder per version. The first pull has no common base:
+
+- local-only files are **kept** (remote absence does not delete them),
+- remote-only files are added,
+- a path that exists on both sides with different content becomes a conflict:
+  the local file stays, and the remote copy is saved under
+  `.dsh-sync/conflicts/<stamp>/...` (ignored by later checkpoints).
+
+The Settings page warns when a marked folder already has files but no sync
+baseline. A new empty folder such as `sync-default` is still the safest choice.
 
 ## Default workspace vs shared workspace
 
@@ -158,7 +172,7 @@ scanned or committed.
 ## Run the tests
 
 ```powershell
-& $node --test --test-concurrency=1 .\test\local.test.mjs .\test\plugin.test.mjs .\test\recovery.test.mjs .\test\pairing.test.mjs .\test\ui-api.test.mjs
+& $node --test --test-concurrency=1 .\test\local.test.mjs .\test\manifest.test.mjs .\test\plugin.test.mjs .\test\recovery.test.mjs .\test\pairing.test.mjs .\test\ui-api.test.mjs
 ```
 
 `$node` is the bundled Node reported by the workspace dependency loader; any

@@ -131,7 +131,10 @@ export function diffManifests(baseFiles, localFiles, remoteFiles) {
 
     if (!r) {
       if (!l) continue
-      if (!b || same(l, b)) {
+      // With no common base, remote absence cannot mean "delete": the folder
+      // may hold work that was never uploaded. Keep local-only files.
+      if (!b) continue
+      if (same(l, b)) {
         remove.push(path)
         continue
       }

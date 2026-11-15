@@ -4,6 +4,13 @@
   "private": true,
   "type": "module",
   "description": "Personal sync hub for DSH sessions and workspace snapshots",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "dsh-plugin",
+    "session-sync",
+    "sync"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/yamsengyi/dsh-session-sync.git"

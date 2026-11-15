@@ -50,7 +50,8 @@ node "$env:DSH_PROFILE_DIR\node_modules\@yamsengyi\dsh-session-sync\bin\session-
 
 See [docs/deploy-windows.md](docs/deploy-windows.md) for the domain and TLS
 setup, and [docs/handoff.md](docs/handoff.md) to hand the server setup to that
-machine's DSH agent.
+machine's DSH agent. The Korean version is
+[docs/handoff.ko.md](docs/handoff.ko.md).
 
 ## Layout
 

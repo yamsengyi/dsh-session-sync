@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.5.0` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.5.1` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -70,10 +70,12 @@ After reloading DSH, open **Settings → Session sync**:
   unpair.
 - **Workspace** (Client/Both) — type a path or fill it from the current session,
   then mark the folder (`.dsh-sync.json`). Known workspaces are listed with a
-  **공유** (shared on this PC) or **로컬** badge. With no saved selection the path
-  defaults to `~\Documents\deepseek-harness\sync-default`, which the plugin
-  creates as an empty folder; override it with `defaultWorkspace` in the bundle
-  config.
+  **공유** (shared on this PC) or **로컬** badge. **동기화 해제** removes the
+  marker without deleting workspace files or hub checkpoints; the `.dsh-sync`
+  state is kept so re-marking can resume from the old base. With no saved
+  selection the path defaults to `~\Documents\deepseek-harness\sync-default`,
+  which the plugin creates as an empty folder; override it with
+  `defaultWorkspace` in the bundle config.
 - **Sync now** (Client/Both) — pull the hub's newest checkpoint, upload the
   existing sessions whose working directory is the marked workspace, then push
   the workspace's current state, with a result summary.

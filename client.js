@@ -62,6 +62,7 @@ window.__ModuleLoader__.load({
         'workspace.path': 'Path',
         'workspace.useCurrent': 'Use current session path',
         'workspace.mark': 'Mark workspace',
+        'workspace.unmark': 'Unshare',
         'workspace.shared': 'Shared on this PC · {folderId}',
         'workspace.local': 'Not shared yet; this is a local folder on this PC.',
         'workspace.list': 'Workspaces',
@@ -91,6 +92,7 @@ window.__ModuleLoader__.load({
         'error.invalid-path': 'Workspace path is not valid or does not exist.',
         'error.no-workspace': 'Mark a workspace first.',
         'error.no-marker': 'Workspace is not marked for sync.',
+        'error.not-marked': 'Workspace is not marked for sync.',
         'error.client-inactive': 'Client mode is not active; pair first.',
         'error.hub-inactive': 'Host mode is not running.',
       },
@@ -133,6 +135,7 @@ window.__ModuleLoader__.load({
         'workspace.path': '路径',
         'workspace.useCurrent': '当前会话路径',
         'workspace.mark': '标记工作区',
+        'workspace.unmark': '取消共享',
         'workspace.shared': '在此电脑共享 · {folderId}',
         'workspace.local': '尚未共享；这是本机的本地文件夹。',
         'workspace.list': '工作区列表',
@@ -162,6 +165,7 @@ window.__ModuleLoader__.load({
         'error.invalid-path': '工作区路径无效或不存在。',
         'error.no-workspace': '请先标记工作区。',
         'error.no-marker': '该工作区尚未标记为同步。',
+        'error.not-marked': '该工作区未标记为同步。',
         'error.client-inactive': '客户端模式未启用；请先配对。',
         'error.hub-inactive': '主机模式未运行。',
       },
@@ -204,6 +208,7 @@ window.__ModuleLoader__.load({
         'workspace.path': '경로',
         'workspace.useCurrent': '현재 세션 경로',
         'workspace.mark': '워크스페이스 지정',
+        'workspace.unmark': '동기화 해제',
         'workspace.shared': '이 컴퓨터에서 공유 중 · {folderId}',
         'workspace.local': '아직 이 컴퓨터의 로컬 폴더입니다.',
         'workspace.list': '워크스페이스 목록',
@@ -233,6 +238,7 @@ window.__ModuleLoader__.load({
         'error.invalid-path': '워크스페이스 경로가 없거나 올바르지 않습니다.',
         'error.no-workspace': '먼저 워크스페이스를 지정하세요.',
         'error.no-marker': '워크스페이스가 동기화 대상으로 지정되지 않았습니다.',
+        'error.not-marked': '워크스페이스가 동기화 대상이 아닙니다.',
         'error.client-inactive': '클라이언트 모드가 아닙니다. 먼저 페어링하세요.',
         'error.hub-inactive': '호스트 모드가 실행 중이 아닙니다.',
       },
@@ -488,6 +494,8 @@ window.__ModuleLoader__.load({
 
       const mark = () => run(t('workspace.mark'), () => call('workspace', { path: workspace.trim() }))
 
+      const unmark = () => run(t('workspace.unmark'), () => call('workspace/unmark', { path: workspace.trim() }))
+
       const syncNow = () => run(t('sync.heading'), () => call('sync', {}))
 
       const rotate = () => run(t('host.rotate'), () => call('code', { rotate: true }))
@@ -519,6 +527,10 @@ window.__ModuleLoader__.load({
       const showHost = mode === 'host' || mode === 'both'
       const showClient = mode === 'client' || mode === 'both'
       const pending = status ? mode !== status.mode : false
+      const selectedWorkspace = status?.knownWorkspaces?.find((ws) => ws.path === workspace)
+      const selectedShared = selectedWorkspace
+        ? selectedWorkspace.shared
+        : Boolean(status?.workspace?.marked && status.workspace.path === workspace)
       const last = status?.lastSync
       const lastPush = last
         ? `v${last.pushed?.version ?? '-'}${last.pushed?.skipped ? ` ${t('sync.noChanges')}` : ''}`
@@ -621,7 +633,10 @@ window.__ModuleLoader__.load({
           })),
           h('div', { style: styles.buttonRow },
             h('button', { style: styles.smallButton, disabled: Boolean(busy), onClick: useCurrent }, t('workspace.useCurrent')),
-            h('button', { style: styles.button, disabled: Boolean(busy), onClick: mark }, t('workspace.mark'))),
+            h('button', { style: styles.button, disabled: Boolean(busy), onClick: mark }, t('workspace.mark')),
+            selectedShared
+              ? h('button', { style: styles.smallButton, disabled: Boolean(busy), onClick: unmark }, t('workspace.unmark'))
+              : null),
           h('p', { style: styles.hint },
             status?.workspace?.marked
               ? t('workspace.shared', { folderId: status.workspace.folderId })
@@ -643,7 +658,7 @@ window.__ModuleLoader__.load({
         showClient ? h('section', { style: styles.section },
           h('h3', { style: styles.heading }, t('sync.heading')),
           h('div', { style: styles.buttonRow },
-            h('button', { style: styles.button, disabled: Boolean(busy) || !status?.client?.running, onClick: syncNow }, t('sync.now'))),
+            h('button', { style: styles.button, disabled: Boolean(busy) || !status?.client?.running || !status?.workspace?.marked, onClick: syncNow }, t('sync.now'))),
           last
             ? h('p', { style: styles.hint }, t('sync.last', {
               time: new Date(last.at).toLocaleString(lang),

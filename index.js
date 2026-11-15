@@ -783,6 +783,21 @@ export async function apply(ctx, raw) {
     return { ...(await readStatus()), folderId }
   }
 
+  const unmarkWorkspace = async (body) => {
+    const target = String(body?.path ?? '').trim()
+    if (!target) throw new SyncHttpError(400, 'invalid-path', 'workspace path is required')
+    const info = await stat(target).catch(() => undefined)
+    if (!info?.isDirectory()) throw new SyncHttpError(400, 'invalid-path', 'workspace path is not a directory')
+    const markerPath = join(target, MARKER_FILE)
+    try {
+      await stat(markerPath)
+    } catch {
+      throw new SyncHttpError(404, 'not-marked', 'workspace is not marked for sync')
+    }
+    await rm(markerPath, { force: true })
+    return readStatus()
+  }
+
   const pushWorkspaceSessions = async (client, workspacePath) => {
     if (!workspacePath) return { scanned: 0, pushed: 0, events: 0, errors: 0 }
     const normalizePath = (value) => String(value ?? '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
@@ -900,6 +915,7 @@ export async function apply(ctx, raw) {
         pair: pairClient,
         unpair: unpairClient,
         markWorkspace,
+        unmarkWorkspace,
         syncNow,
         code: issueCode,
         checkUpdate,

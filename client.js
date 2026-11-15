@@ -655,12 +655,10 @@ window.__ModuleLoader__.load({
       },
     }
 
-    /** Manual update control shared by the plugin detail and Settings General. */
-    function UpdateControl({ variant = 'row' }) {
+    /** Status-only update row. Installation stays with the Plugin Manager. */
+    function UpdateControl() {
       const [update, setUpdate] = useState(null)
       const [busy, setBusy] = useState(false)
-      const [confirming, setConfirming] = useState(false)
-      const [message, setMessage] = useState('')
       const [error, setError] = useState('')
       const lang = readLanguage() === 'auto' ? detectLanguage() : readLanguage()
       const tr = (key, params) => translate(lang, key, params)
@@ -681,60 +679,25 @@ window.__ModuleLoader__.load({
         void check(false)
       }, [])
 
-      const install = async () => {
-        setBusy(true)
-        setError('')
-        setMessage('')
-        try {
-          const result = await call('update/install', {})
-          setMessage(result.started ? tr('update.started') : tr('update.upToDate'))
-          setConfirming(false)
-        } catch (reason) {
-          setError(String(reason?.message ?? reason))
-        } finally {
-          setBusy(false)
-        }
-      }
-
       const installed = update
         ? tr('update.installed', {
           current: `v${update.current ?? '?'}`,
           latest: update.latest ?? '?',
         })
         : ''
-      const controls = h(React.Fragment, null,
-        confirming ? h(React.Fragment, null,
-          h('span', { style: updateStyles.warning }, tr('update.confirm')),
-          h('button', { type: 'button', style: updateStyles.primary, disabled: busy, onClick: install }, tr('update.confirmYes')),
-          h('button', { type: 'button', style: updateStyles.button, disabled: busy, onClick: () => setConfirming(false) }, tr('update.cancel')))
-          : null,
-        !confirming && update?.updateAvailable
-          ? h('button', { type: 'button', style: updateStyles.primary, disabled: busy, onClick: () => setConfirming(true) }, tr('update.run'))
-          : null,
-        !confirming && !update?.updateAvailable
-          ? h('button', { type: 'button', style: updateStyles.button, disabled: busy, onClick: () => check(true) }, tr('update.check'))
-          : null)
-
-      if (variant === 'actions') {
-        return h('span', { style: updateStyles.wrap },
-          controls,
-          update?.updateAvailable ? h('span', { style: updateStyles.hint }, `v${update.latest}`) : null,
-          message ? h('span', { style: updateStyles.hint }, message) : null,
-          error ? h('span', { style: updateStyles.warning }, `${tr('update.failed')}: ${error}`) : null)
-      }
 
       return h('div', { style: { ...updateStyles.wrap, justifyContent: 'space-between', width: '100%' } },
         h('div', { style: { display: 'flex', flexDirection: 'column', gap: 2 } },
           h('span', { style: updateStyles.title }, tr('update.rowTitle')),
           h('span', { style: updateStyles.hint }, installed || tr('update.none')),
-          message ? h('span', { style: updateStyles.hint }, message) : null,
+          update?.updateAvailable ? h('span', { style: updateStyles.hint }, tr('update.reinstall')) : null,
           error ? h('span', { style: updateStyles.warning }, `${tr('update.failed')}: ${error}`) : null),
-        h('div', { style: updateStyles.wrap }, controls))
-    }
-
-    function PluginDetailUpdate({ subject }) {
-      if (subject?.kind !== 'bundle' || subject.pkg?.name !== '@yamsengyi/dsh-session-sync') return null
-      return h(UpdateControl, { variant: 'actions' })
+        h('button', {
+          type: 'button',
+          style: updateStyles.button,
+          disabled: busy,
+          onClick: () => check(true),
+        }, tr('update.check')))
     }
 
     const projectStyles = {
@@ -1351,16 +1314,11 @@ window.__ModuleLoader__.load({
           name: 'sidebar.session.action',
           id: 'session-sync-projects',
         }, ProjectsEntry))
-        ctx.slots.inject('plugins.detail.actions', () => ctx.slots.register({
-          name: 'plugins.detail.actions',
-          id: 'session-sync-update',
-          order: 50,
-        }, PluginDetailUpdate))
         ctx.slots.inject('settings.general.item', () => ctx.slots.register({
           name: 'settings.general.item',
           id: 'session-sync-update',
           order: 110,
-        }, () => h(UpdateControl, { variant: 'row' })))
+        }, () => h(UpdateControl)))
       },
     }
   },

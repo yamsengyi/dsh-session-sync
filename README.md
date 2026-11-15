@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.4.5` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.4.6` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -121,6 +121,10 @@ The default then becomes `D:\DSH\deepseek-harness\default-workspace`. An existin
 default workspace keeps its old path; create a new workspace for the new
 location instead of moving the recorded one.
 
+- **Update check** — the settings footer compares the installed version with
+  the latest GitHub tag and offers a manual check. Each installed profile checks
+  independently; the result is cached for an hour.
+
 ## Layout
 
 ```
@@ -178,7 +182,7 @@ scanned or committed.
 ## Run the tests
 
 ```powershell
-& $node --test --test-concurrency=1 .\test\local.test.mjs .\test\manifest.test.mjs .\test\plugin.test.mjs .\test\recovery.test.mjs .\test\pairing.test.mjs .\test\ui-api.test.mjs
+& $node --test --test-concurrency=1 .\test\local.test.mjs .\test\manifest.test.mjs .\test\plugin.test.mjs .\test\recovery.test.mjs .\test\pairing.test.mjs .\test\ui-api.test.mjs .\test\update-check.test.mjs
 ```
 
 `$node` is the bundled Node reported by the workspace dependency loader; any

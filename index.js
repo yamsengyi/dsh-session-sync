@@ -19,6 +19,7 @@ import { basename, join } from 'node:path'
 import { createHubServer } from './src/hub-server.js'
 import { SyncClient } from './src/sync-client.js'
 import { PROTOCOL_VERSION, SyncHttpError, sha256Hex } from './src/protocol.js'
+import { compareVersions, fetchLatestVersion } from './src/update-check.js'
 import { createSessionSyncRoutes } from './src/ui-api.js'
 
 const require = createRequire(import.meta.url)
@@ -161,6 +162,7 @@ export async function apply(ctx, raw) {
   const hubConfigPath = join(dataDir, 'hub.json')
   const clientConfigPath = join(dataDir, 'client.json')
   const uiStatePath = join(dataDir, 'ui.json')
+  const updateStatePath = join(dataDir, 'update-check.json')
 
   // The explicit default is an empty, dedicated folder. Creating it is a no-op
   // when it already exists; it never writes into an existing folder.
@@ -641,6 +643,12 @@ export async function apply(ctx, raw) {
     const hubEnabled = Boolean(hubConfig) && hubConfig.enabled !== false
     const clientEnabled = Boolean(clientConfig) && clientConfig.enabled !== false
     const mode = hubEnabled && clientEnabled ? 'both' : hubEnabled ? 'host' : clientEnabled ? 'client' : 'off'
+    let update
+    try {
+      update = await readJsonIfExists(updateStatePath)
+    } catch {
+      update = undefined
+    }
     return {
       pluginVersion: PLUGIN_VERSION,
       protocol: PROTOCOL_VERSION,
@@ -672,6 +680,7 @@ export async function apply(ctx, raw) {
       defaultWorkspace: config.defaultWorkspace,
       currentPath: await currentPath(),
       knownWorkspaces: await listKnownWorkspaces(),
+      update: update ?? null,
       lastSync: ui.lastSync ?? null,
     }
   }
@@ -846,6 +855,41 @@ export async function apply(ctx, raw) {
     return { code: runtime.hub.pairingCode() }
   }
 
+  const checkUpdate = async (body) => {
+    const force = body?.force === true
+    let cached
+    try {
+      cached = await readJsonIfExists(updateStatePath)
+    } catch {
+      cached = undefined
+    }
+    const now = Date.now()
+    const minInterval = force ? 60_000 : 3_600_000
+    if (cached && Number.isFinite(cached.checkedAt) && now - cached.checkedAt < minInterval) {
+      return cached
+    }
+    try {
+      const latest = await fetchLatestVersion()
+      const result = {
+        current: PLUGIN_VERSION,
+        latest,
+        updateAvailable: compareVersions(latest, PLUGIN_VERSION) > 0,
+        checkedAt: now,
+      }
+      await mkdir(dataDir, { recursive: true })
+      await writeJsonAtomic(updateStatePath, result)
+      return result
+    } catch (error) {
+      return {
+        current: PLUGIN_VERSION,
+        latest: cached?.latest ?? null,
+        updateAvailable: cached?.updateAvailable ?? false,
+        checkedAt: now,
+        error: String(error?.message ?? error),
+      }
+    }
+  }
+
   if (ctx.webServer && ctx.connection) {
     const disposeRoutes = createSessionSyncRoutes({
       webServer: ctx.webServer,
@@ -858,6 +902,7 @@ export async function apply(ctx, raw) {
         markWorkspace,
         syncNow,
         code: issueCode,
+        checkUpdate,
       },
       logger,
     })

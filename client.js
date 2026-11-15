@@ -52,6 +52,14 @@ window.__ModuleLoader__.load({
       return status.mode === 'off' ? '꺼짐' : '중지됨'
     }
 
+    function updateLabel(update) {
+      if (!update) return '업데이트 확인 전'
+      if (update.updateAvailable) return `최신 ${update.latest} · 업데이트 가능`
+      if (update.latest) return `최신 ${update.latest} · 최신 버전`
+      if (update.error) return `확인 실패: ${String(update.error).slice(0, 80)}`
+      return '확인 실패'
+    }
+
     const fieldBase = { display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }
     const workspaceRow = {
       display: 'flex', gap: 8, alignItems: 'center', padding: '4px 6px',
@@ -83,6 +91,7 @@ window.__ModuleLoader__.load({
       muted: { margin: 0, fontSize: 12, opacity: 0.7 },
       hint: { margin: 0, fontSize: 12, opacity: 0.65 },
       warning: { margin: 0, fontSize: 12, color: '#d08a2e' },
+      updateAvailable: { margin: 0, fontSize: 12, color: '#d08a2e' },
       workspaceList: { display: 'flex', flexDirection: 'column', gap: 4, marginTop: 2 },
       workspaceRow,
       workspaceRowActive: {
@@ -123,6 +132,7 @@ window.__ModuleLoader__.load({
       const [busy, setBusy] = useState('')
       const [error, setError] = useState('')
       const [notice, setNotice] = useState('')
+      const [update, setUpdate] = useState(null)
       const [mode, setMode] = useState('host')
       const [hostPort, setHostPort] = useState('8787')
       const [hostBind, setHostBind] = useState('127.0.0.1')
@@ -135,6 +145,7 @@ window.__ModuleLoader__.load({
       const refresh = async (initial = false) => {
         const next = await call('status')
         setStatus(next)
+        setUpdate(next.update ?? null)
         if (initial || !initialized) {
           setMode(next.mode ?? 'host')
           setHostPort(String(next.hub.port ?? 8787))
@@ -149,9 +160,17 @@ window.__ModuleLoader__.load({
       }
 
       useEffect(() => {
-        void refresh(true).catch((reason) => setError(String(reason.message ?? reason)))
+        void refresh(true).then(() => {
+          void call('update', { force: false }).then(setUpdate).catch(() => {})
+        }).catch((reason) => setError(String(reason.message ?? reason)))
         // eslint-disable-next-line react-hooks/exhaustive-deps
       }, [])
+
+      const checkUpdate = () => run('업데이트 확인', async () => {
+        const result = await call('update', { force: true })
+        setUpdate(result)
+        return result
+      })
 
       const run = async (label, task) => {
         setBusy(label)
@@ -331,7 +350,13 @@ window.__ModuleLoader__.load({
         error ? h('p', { style: styles.error }, error) : null,
         notice ? h('p', { style: styles.notice }, notice) : null,
         h('div', { style: styles.buttonRow },
-          h('button', { style: styles.smallButton, disabled: Boolean(busy), onClick: () => run('새로고침', async () => { await refresh(); return undefined }) }, '새로고침')),
+          h('button', { style: styles.smallButton, disabled: Boolean(busy), onClick: () => run('새로고침', async () => { await refresh(); return undefined }) }, '새로고침'),
+          h('button', { style: styles.smallButton, disabled: Boolean(busy), onClick: checkUpdate }, '업데이트 확인'),
+          h('span', { style: update?.updateAvailable ? styles.updateAvailable : styles.hint }, updateLabel(update)),
+        ),
+        update?.updateAvailable
+          ? h('p', { style: styles.updateAvailable }, 'Plugins에서 이 플러그인을 최신 GitHub URL로 재설치하세요.')
+          : null,
         h('p', { style: styles.hint }, `Session sync v${status?.pluginVersion ?? '?'} · protocol ${status?.protocol ?? '?'}`),
       )
     }

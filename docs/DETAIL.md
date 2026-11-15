@@ -129,6 +129,15 @@ A deployment can change where DSH creates **future** default workspaces through
 the controller's `documentsDirectory` config (a fully qualified Host path). The
 existing default workspace record is not moved by that change.
 
+## Update check
+
+The settings footer shows the installed `pluginVersion` and a cached update
+result. Opening the page checks GitHub tags once (cached for an hour); the
+**업데이트 확인** button forces a check with a 60-second floor. The Host compares
+the highest stable tag with its own version and reports `updateAvailable`; a
+network failure is reported as text and never blocks settings. Each installed
+profile checks independently, so every PC can see whether its bundle is behind.
+
 ## Opting a workspace in
 
 Automatic commits only touch a workspace that carries `.dsh-sync.json` at its

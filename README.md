@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.7.3` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.8.0` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -70,18 +70,17 @@ After reloading DSH, open **Settings → Session sync**:
 - **Client settings** — target URL in one line, fill it from the local host
   settings, enter the pairing code and device name, then pair or unpair.
 - **Workspace** (Host/Client) — type a path or fill it from the current session,
-  then mark the folder (`.dsh-sync.json`). A **Projects** button beside the
-  sidebar's New session button opens a modal with **공유 프로젝트** and
-  **로컬 프로젝트** groups; the same groups appear in Settings. Left sidebar
-  session rows also carry a small **공유/로컬** badge. **동기화 해제** removes the
-  marker without deleting workspace files or hub checkpoints; the `.dsh-sync`
-  state is kept so re-marking can resume from the old base. With no saved
-  selection the path defaults to
-  `~\Documents\deepseek-harness\sync-default`, which the plugin creates,
-  registers as a DSH Workspace, and **marks as shared by default**. Every other
-  workspace is local until explicitly marked; **unsharing `sync-default`
-  persists** and is not overridden on the next load. Override the path with
-  `defaultWorkspace` in the bundle config.
+  then mark the folder (`.dsh-sync.json`). The default
+  `~\Documents\deepseek-harness\sync-default` is a **container**: each immediate
+  child folder becomes its own DSH Workspace and is marked shared automatically;
+  the container itself is not shared. Use **하위 폴더 스캔** after adding a
+  project folder. A **Projects** button beside the sidebar's New session button
+  opens a modal with **공유 프로젝트** and **로컬 프로젝트** groups; the same
+  groups appear in Settings. Left sidebar session rows also carry a small
+  **공유/로컬** badge. **동기화 해제** removes the marker without deleting
+  workspace files or hub checkpoints; the `.dsh-sync` state is kept so
+  re-marking can resume from the old base. Set `defaultWorkspaceMode` to
+  `root` to share the container itself, or `off` to disable the automatic scan.
 - **Sync now** (Host/Client) — pull the hub's newest checkpoint, upload the
   existing sessions whose working directory is the marked workspace, then push
   the workspace's current state, with a result summary.
@@ -119,12 +118,12 @@ safest first-sync target.
 
 DSH creates its own first-use workspace at
 `<Documents>\deepseek-harness\default-workspace`; this plugin never creates or
-moves that folder. It does create and **register** its own
-`~\Documents\deepseek-harness\sync-default` as a DSH Workspace on load, so it
-appears in the left Workspaces list without a manual "Add workspace". Only that
-folder is marked shared by default; `default-workspace` and other projects
-remain local until explicitly marked. Session auto-push is also gated by the
-workspace marker, so an unmarked project's session history is not uploaded.
+moves that folder. Its own
+`~\Documents\deepseek-harness\sync-default` is a container: on load (and on
+**하위 폴더 스캔**) each immediate child directory is registered as a DSH
+Workspace and marked shared. The container itself is not shared. Only marked
+projects sync; `default-workspace` and other unmarked projects remain local, and
+session auto-push is gated by the workspace marker.
 
 To change where DSH creates **future** default workspaces, override the
 workspace controller in the profile patch:

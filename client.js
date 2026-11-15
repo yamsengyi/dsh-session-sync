@@ -73,6 +73,7 @@ window.__ModuleLoader__.load({
         'workspace.useCurrent': 'Use current session path',
         'workspace.mark': 'Mark workspace',
         'workspace.unmark': 'Unshare',
+        'workspace.scan': 'Scan subfolders',
         'workspace.shared': 'Sharing (syncing) · {folderId}',
         'workspace.local': 'Not shared',
         'workspace.list': 'Workspaces',
@@ -156,6 +157,7 @@ window.__ModuleLoader__.load({
         'workspace.useCurrent': '当前会话路径',
         'workspace.mark': '标记工作区',
         'workspace.unmark': '取消共享',
+        'workspace.scan': '扫描子文件夹',
         'workspace.shared': '共享中（同步中） · {folderId}',
         'workspace.local': '未共享',
         'workspace.list': '工作区列表',
@@ -239,6 +241,7 @@ window.__ModuleLoader__.load({
         'workspace.useCurrent': '현재 세션 경로',
         'workspace.mark': '워크스페이스 지정',
         'workspace.unmark': '동기화 해제',
+        'workspace.scan': '하위 폴더 스캔',
         'workspace.shared': '공유중(동기화중) · {folderId}',
         'workspace.local': '공유하지 않음',
         'workspace.list': '워크스페이스 목록',
@@ -684,6 +687,12 @@ window.__ModuleLoader__.load({
 
       const unmark = () => run(t('workspace.unmark'), () => call('workspace/unmark', { path: workspace.trim() }))
 
+      const scan = () => run(t('workspace.scan'), async () => {
+        const result = await call('workspaces/scan', {})
+        if (result.workspace?.path) setWorkspace(result.workspace.path)
+        return result
+      })
+
       const syncNow = () => run(t('sync.heading'), () => call('sync', {}))
 
       const rotate = () => run(t('host.rotate'), () => call('code', { rotate: true }))
@@ -837,7 +846,8 @@ window.__ModuleLoader__.load({
             h('button', { style: styles.button, disabled: Boolean(busy), onClick: mark }, t('workspace.mark')),
             selectedShared
               ? h('button', { style: styles.smallButton, disabled: Boolean(busy), onClick: unmark }, t('workspace.unmark'))
-              : null),
+              : null,
+            h('button', { style: styles.smallButton, disabled: Boolean(busy), onClick: scan }, t('workspace.scan'))),
           h('p', { style: styles.hint },
             status?.workspace?.marked
               ? t('workspace.shared', { folderId: status.workspace.folderId })

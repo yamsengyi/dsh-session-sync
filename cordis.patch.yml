@@ -22,4 +22,5 @@
         autoCheckpoint: true
         checkpointIntervalMs: 30000
         defaultWorkspace: ''
+        defaultWorkspaceMode: children
         deviceName: ''

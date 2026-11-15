@@ -48,6 +48,10 @@ function normalizeConfig(raw) {
   if (!Number.isInteger(hubPort) || hubPort < 0 || hubPort > 65535) {
     throw new Error(`[session-sync] hubPort must be an integer between 0 and 65535, received ${JSON.stringify(config.hubPort)}`)
   }
+  const defaultWorkspaceMode = String(config.defaultWorkspaceMode ?? 'children')
+  if (!['children', 'root', 'off'].includes(defaultWorkspaceMode)) {
+    throw new Error('[session-sync] defaultWorkspaceMode must be "children", "root", or "off"')
+  }
   const rawTokens = Array.isArray(config.hubTokens) ? config.hubTokens : []
   const tokens = rawTokens.map((entry) => {
     if (entry && typeof entry === 'object' && typeof entry.token === 'string' && entry.token.length > 0) {
@@ -71,6 +75,7 @@ function normalizeConfig(raw) {
       : 30_000,
     defaultWorkspace: String(config.defaultWorkspace ?? '')
       || join(homedir(), 'Documents', 'deepseek-harness', 'sync-default'),
+    defaultWorkspaceMode,
     deviceName: String(config.deviceName ?? '') || hostname(),
   }
 }
@@ -170,28 +175,81 @@ export async function apply(ctx, raw) {
   const uiStatePath = join(dataDir, 'ui.json')
   const updateStatePath = join(dataDir, 'update-check.json')
 
-  // The explicit default is an empty, dedicated folder. Creating it is a no-op
-  // when it already exists; it never writes into an existing folder. It is also
-  // registered as a DSH Workspace so it appears in the left Workspaces list
-  // without the operator manually adding the directory.
-  void (async () => {
-    await mkdir(config.defaultWorkspace, { recursive: true })
-    // Only sync-default is shared by default. An explicit unshare persists
-    // through ui.json so the next load does not silently re-enable it.
-    const ui = await readJsonIfExists(uiStatePath)
-    const optedOut = ui?.defaultWorkspaceUnshared === true
-      && samePath(ui.defaultWorkspaceUnsharedPath, config.defaultWorkspace)
-    if (!optedOut) {
-      const marker = await readMarker(config.defaultWorkspace)
-      if (!marker) await initFolder(config.defaultWorkspace)
+  // sync-default is a container. Its immediate child directories are the
+  // projects: each becomes a DSH Workspace and is marked shared by default.
+  // The container itself is not marked, so project checkpoints stay separate.
+  const scanDefaultProjects = async () => {
+    const parent = config.defaultWorkspace
+    await mkdir(parent, { recursive: true })
+    const ui = (await readJsonIfExists(uiStatePath)) ?? {}
+    if (config.defaultWorkspaceMode === 'off') {
+      return { mode: 'off', scanned: 0, registered: 0, shared: 0 }
     }
     const registry = ctx.workspaceRegistry
-    if (!registry) return
-    const existing = await registry.resolveByPath(config.defaultWorkspace)
-    if (existing) return
-    await registry.create(config.defaultWorkspace)
-    logger.info?.(`[session-sync] registered workspace ${config.defaultWorkspace}`)
-  })().catch((error) => {
+    if (config.defaultWorkspaceMode === 'root') {
+      const optedOut = ui.defaultWorkspaceUnshared === true
+        && samePath(ui.defaultWorkspaceUnsharedPath, parent)
+      let shared = 0
+      if (!optedOut) {
+        const marker = await readMarker(parent)
+        if (!marker) {
+          await initFolder(parent)
+          shared = 1
+        }
+      }
+      let registered = 0
+      if (registry) {
+        const existing = await registry.resolveByPath(parent).catch(() => undefined)
+        if (!existing) {
+          await registry.create(parent)
+          registered = 1
+        }
+      }
+      return { mode: 'root', scanned: 1, registered, shared }
+    }
+
+    // Children mode: the parent is a container, never a shared project.
+    const parentMarker = await readMarker(parent).catch(() => undefined)
+    if (parentMarker) await rm(join(parent, MARKER_FILE), { force: true })
+    const unshared = Array.isArray(ui.unsharedWorkspaces) ? ui.unsharedWorkspaces : []
+    const entries = await readdir(parent, { withFileTypes: true }).catch(() => [])
+    const children = entries
+      .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules')
+      .map((entry) => join(parent, entry.name))
+    let registered = 0
+    let shared = 0
+    for (const child of children) {
+      try {
+        const blocked = unshared.some((path) => samePath(path, child))
+        const marker = await readMarker(child)
+        if (blocked) {
+          if (marker) await rm(join(child, MARKER_FILE), { force: true })
+        } else if (!marker) {
+          await initFolder(child)
+          shared += 1
+        }
+        if (registry) {
+          const existing = await registry.resolveByPath(child).catch(() => undefined)
+          if (!existing) {
+            await registry.create(child)
+            registered += 1
+          }
+        }
+      } catch (error) {
+        logger.warn?.(`[session-sync] cannot prepare project ${child}: ${describe(error)}`)
+      }
+    }
+    if (children.length > 0 && ui.workspacePath && samePath(ui.workspacePath, parent)) {
+      await writeJsonAtomic(uiStatePath, { ...ui, workspacePath: children[0] })
+    }
+    return { mode: 'children', scanned: children.length, registered, shared }
+  }
+
+  void scanDefaultProjects().then((result) => {
+    if (result.registered > 0 || result.shared > 0) {
+      logger.info?.(`[session-sync] default workspace scan: ${JSON.stringify(result)}`)
+    }
+  }).catch((error) => {
     logger.warn?.(`[session-sync] cannot prepare default workspace ${config.defaultWorkspace}: ${describe(error)}`)
   })
 
@@ -704,6 +762,7 @@ export async function apply(ctx, raw) {
       // Only DSH's saved workspace records belong in the list; a session cwd
       // that was never saved as a Workspace is not a workspace entry.
       for (const workspace of ctx.workspaceRegistry?.list?.() ?? []) {
+        if (config.defaultWorkspaceMode === 'children' && samePath(workspace.path, config.defaultWorkspace)) continue
         add(workspace.path, {
           sessions: Array.isArray(workspace.sessionIds) ? workspace.sessionIds.length : 0,
           lastAt: Date.parse(workspace.updatedAt) || 0,
@@ -713,8 +772,10 @@ export async function apply(ctx, raw) {
       // A missing registry still leaves the configured default and selection.
     }
     const ui = await readUi()
-    if (ui.workspacePath) add(ui.workspacePath)
-    add(config.defaultWorkspace)
+    if (ui.workspacePath && !(config.defaultWorkspaceMode === 'children' && samePath(ui.workspacePath, config.defaultWorkspace))) {
+      add(ui.workspacePath)
+    }
+    if (config.defaultWorkspaceMode !== 'children') add(config.defaultWorkspace)
     const workspaces = []
     for (const item of seen.values()) {
       let marker
@@ -901,7 +962,11 @@ export async function apply(ctx, raw) {
     }
     if (!info.isDirectory()) throw new SyncHttpError(400, 'invalid-path', 'workspace path is not a directory')
     const folderId = await initFolder(target)
-    const patch = { workspacePath: target }
+    const current = await readUi()
+    const unshared = Array.isArray(current.unsharedWorkspaces)
+      ? current.unsharedWorkspaces.filter((path) => !samePath(path, target))
+      : []
+    const patch = { workspacePath: target, unsharedWorkspaces: unshared }
     if (samePath(target, config.defaultWorkspace)) {
       patch.defaultWorkspaceUnshared = false
       patch.defaultWorkspaceUnsharedPath = null
@@ -922,9 +987,15 @@ export async function apply(ctx, raw) {
       throw new SyncHttpError(404, 'not-marked', 'workspace is not marked for sync')
     }
     await rm(markerPath, { force: true })
+    const current = await readUi()
+    const unshared = Array.isArray(current.unsharedWorkspaces) ? [...current.unsharedWorkspaces] : []
+    if (!unshared.some((path) => samePath(path, target))) unshared.push(target)
+    const patch = { unsharedWorkspaces: unshared }
     if (samePath(target, config.defaultWorkspace)) {
-      await updateUi({ defaultWorkspaceUnshared: true, defaultWorkspaceUnsharedPath: target })
+      patch.defaultWorkspaceUnshared = true
+      patch.defaultWorkspaceUnsharedPath = target
     }
+    await updateUi(patch)
     return readStatus()
   }
 
@@ -1033,6 +1104,11 @@ export async function apply(ctx, raw) {
     return { code: runtime.hub.pairingCode() }
   }
 
+  const scanWorkspaces = async () => {
+    const scan = await scanDefaultProjects()
+    return { ...(await readStatus()), scan }
+  }
+
   const checkUpdate = async (body) => {
     const force = body?.force === true
     let cached
@@ -1080,6 +1156,7 @@ export async function apply(ctx, raw) {
         markWorkspace,
         unmarkWorkspace,
         sessionInfo,
+        scanWorkspaces,
         syncNow,
         code: issueCode,
         checkUpdate,

@@ -71,6 +71,7 @@ export function createSessionSyncRoutes(options) {
   register('POST', '/session-sync/api/workspace', (body) => handlers.markWorkspace(body))
   register('POST', '/session-sync/api/workspace/unmark', (body) => handlers.unmarkWorkspace(body))
   register('POST', '/session-sync/api/session', (body) => handlers.sessionInfo(body))
+  register('POST', '/session-sync/api/workspaces/scan', () => handlers.scanWorkspaces())
   register('POST', '/session-sync/api/sync', () => handlers.syncNow())
   register('POST', '/session-sync/api/code', (body) => handlers.code(body))
   register('POST', '/session-sync/api/update', (body) => handlers.checkUpdate(body))

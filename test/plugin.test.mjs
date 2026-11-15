@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createServer } from 'node:http'
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { apply, initFolder } from '../index.js'
@@ -206,10 +206,12 @@ test('role auto syncs as a client when client.json exists', async (t) => {
   assert.equal(head, 2)
 })
 
-test('auto-marks the default workspace and ignores unmarked session cwds', async (t) => {
+test('auto-marks sync-default child projects and ignores unmarked session cwds', async (t) => {
   const dataDir = await mkdtemp(join(tmpdir(), 'dsh-sync-gate-'))
   const hub = await createHubServer({ dataDir, port: 0, tokens: [{ name: 'gate', token: 'tok-gate' }], logger: quiet })
   const defaultWorkspace = await mkdtemp(join(tmpdir(), 'dsh-sync-default-'))
+  const project = join(defaultWorkspace, 'project-a')
+  await mkdir(project, { recursive: true })
   const unmarkedWorkspace = await mkdtemp(join(tmpdir(), 'dsh-sync-unmarked-'))
   const ctx = fakeContext()
   t.after(async () => {
@@ -231,15 +233,16 @@ test('auto-marks the default workspace and ignores unmarked session cwds', async
   const markerDeadline = Date.now() + 8000
   while (Date.now() < markerDeadline) {
     try {
-      await readFile(join(defaultWorkspace, '.dsh-sync.json'), 'utf8')
+      await readFile(join(project, '.dsh-sync.json'), 'utf8')
       break
     } catch {
       await new Promise((resolve) => setTimeout(resolve, 50))
     }
   }
-  await readFile(join(defaultWorkspace, '.dsh-sync.json'), 'utf8')
+  await readFile(join(project, '.dsh-sync.json'), 'utf8')
+  await assert.rejects(readFile(join(defaultWorkspace, '.dsh-sync.json'), 'utf8'))
 
-  const shared = { id: 's-gated-shared', header: { id: 's-gated-shared', cwd: defaultWorkspace, version: 3, createdAt: 1 } }
+  const shared = { id: 's-gated-shared', header: { id: 's-gated-shared', cwd: project, version: 3, createdAt: 1 } }
   const unmarked = { id: 's-gated-unmarked', header: { id: 's-gated-unmarked', cwd: unmarkedWorkspace, version: 3, createdAt: 2 } }
   for (const session of [shared, unmarked]) {
     ctx.emit('session/event', session, { type: 'turn/start', seq: 0, time: 1, data: { turn: 1 } })
@@ -366,6 +369,7 @@ test('the sync command initializes a hub, pairs, and starts syncing', async (t) 
   }
   assert.equal(head, 2)
 })
+
 
 
 

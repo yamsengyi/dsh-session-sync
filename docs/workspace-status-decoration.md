@@ -15,9 +15,11 @@ copy-ready request for a future DSH project or upstream feature request.
   **Shared projects** and **Local projects** groups.
 - **Settings** — the same two groups also appear in
   Settings → Session sync → Shared workspace.
-- **Workspace registration** — on load the plugin creates
-  `~\Documents\deepseek-harness\sync-default` and registers it through
-  `ctx.workspaceRegistry.create()` if it is not already a DSH Workspace.
+- **Workspace registration** — on load the plugin creates the
+  `~\Documents\deepseek-harness\sync-default` container and, for each immediate
+  child project folder, registers a DSH Workspace and marks it shared.
+  `하위 폴더 스캔` repeats this after a new project folder is added. The
+  container itself is not shared.
 - All of the above use public slots/Host APIs; the plugin does not touch
   another plugin's DOM.
 

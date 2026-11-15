@@ -46,6 +46,8 @@ for the server's DSH agent.
 | `autoPush` | Push finished turns automatically (default `true`) |
 | `autoCheckpoint` | Commit marked workspaces after a finished turn (default `true`) |
 | `checkpointIntervalMs` | Minimum gap between automatic commits per workspace (default `30000`) |
+| `defaultWorkspace` | Container path for project subfolders (default `~\Documents\deepseek-harness\sync-default`) |
+| `defaultWorkspaceMode` | `children` (default): register/mark immediate child projects; `root`: share the container; `off`: no automatic scan |
 | `deviceName` | Author recorded on checkpoints; defaults to the host name |
 
 ### Setup
@@ -132,13 +134,15 @@ account's Documents folder is redirected.
 
 The first-use workspace at `<Documents>\deepseek-harness\default-workspace` is
 created by DSH's workspace controller, not by this plugin. The plugin's own
-`defaultWorkspace` (`~\Documents\deepseek-harness\sync-default`) is created empty
-on load, registered through `ctx.workspaceRegistry.create(...)` when it is not
-already a DSH Workspace, and **marked shared by default**. An explicit unshare
-records `defaultWorkspaceUnshared` in `ui.json`, so later loads do not re-mark
-it. No other workspace is marked automatically. Session auto-push reads the
-workspace marker at the session's `cwd`; an unmarked workspace's history is
-buffered only until the turn ends and is then dropped without a network call.
+`defaultWorkspace` (`~\Documents\deepseek-harness\sync-default`) is a container.
+On load and on **하위 폴더 스캔**, each immediate child directory is registered
+through `ctx.workspaceRegistry.create(...)` and marked shared; the container
+itself is not marked. `defaultWorkspaceMode` selects `children` (default),
+`root` (share the container itself), or `off`. An unshare records the path in
+`ui.unsharedWorkspaces`, so a later scan does not re-mark it. Session auto-push
+reads the workspace marker at the session's `cwd`; an unmarked workspace's
+history is buffered only until the turn ends and is then dropped without a
+network call.
 
 A deployment can change where DSH creates **future** default workspaces through
 the controller's `documentsDirectory` config (a fully qualified Host path). The

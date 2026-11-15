@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Session sync",
+    "description": "Push finished turns and workspace snapshots to a personal hub, and pull them onto another PC.",
+    "detail": "docs/DETAIL.md"
+  }
+}

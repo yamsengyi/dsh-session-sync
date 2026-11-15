@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "세션 동기화",
+    "description": "완료된 턴과 워크스페이스 스냅샷을 개인 허브에 올리고, 다른 PC에서 내려받습니다.",
+    "detail": "docs/DETAIL.md"
+  }
+}

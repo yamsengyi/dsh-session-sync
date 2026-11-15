@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * dsh-sync setup CLI.
+ * dsh-session-sync setup CLI.
  *
  * `init-hub` writes the marker that makes the DSH plugin start a hub, and mints
  * the first pairing code. `pair` exchanges that code for a device token and
@@ -78,7 +78,7 @@ async function initHub(args) {
   console.log('')
   console.log('next: start DSH on this machine; the hub starts automatically.')
   console.log('then pair each client:')
-  console.log(`  node bin/dsh-sync.mjs pair --hub http://<this-host>:${port} --code ${state.pairingCode} --name <device>`)
+  console.log(`  node bin/session-sync.mjs pair --hub http://<this-host>:${port} --code ${state.pairingCode} --name <device>`)
 }
 
 async function pair(args) {
@@ -156,13 +156,13 @@ async function code(args) {
   console.log(state.pairing.code)
 }
 
-const help = `dsh-sync — personal session and workspace sync
+const help = `dsh-session-sync — personal session and workspace sync
 
 Usage:
-  dsh-sync init-hub [--host 0.0.0.0] [--port 8787] [--data-dir PATH]
-  dsh-sync pair --hub URL --code CODE [--name NAME] [--data-dir PATH]
-  dsh-sync status [--data-dir PATH]
-  dsh-sync code [--rotate] [--hub URL --token TOKEN] [--data-dir PATH]
+  dsh-session-sync init-hub [--host 0.0.0.0] [--port 8787] [--data-dir PATH]
+  dsh-session-sync pair --hub URL --code CODE [--name NAME] [--data-dir PATH]
+  dsh-session-sync status [--data-dir PATH]
+  dsh-session-sync code [--rotate] [--hub URL --token TOKEN] [--data-dir PATH]
 
 Defaults:
   data dir  $DSH_HOME/dsh-sync (or ~/.dsh/dsh-sync)
@@ -181,6 +181,6 @@ try {
     if (command !== 'help') process.exit(1)
   }
 } catch (error) {
-  console.error(`[dsh-sync] ${error.message}`)
+  console.error(`[session-sync] ${error.message}`)
   process.exit(1)
 }

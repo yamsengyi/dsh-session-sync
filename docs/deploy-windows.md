@@ -14,13 +14,13 @@ The server must have DSH running for the hub to be reachable.
 ## 1. Server setup
 
 1. Install the bundle: **Plugins → Add plugin**, paste
-   `https://github.com/yamsengyi/dsh-sync`, and leave the Registry dropdown at
+   `https://github.com/yamsengyi/dsh-session-sync`, and leave the Registry dropdown at
    its default (a GitHub URL bypasses the npm registry).
-2. Reload DSH once so the plugin code and the `/sync` command load.
+2. Reload DSH once so the plugin code and the `/session-sync` command load.
 3. In DSH, run:
 
 ```text
-/sync init-hub
+/session-sync init-hub
 ```
 
 The command writes `%USERPROFILE%\.dsh\dsh-sync\hub.json`, starts the hub
@@ -29,13 +29,13 @@ immediately, and returns the pairing code (also stored in
 are needed.
 
 - Default bind is `127.0.0.1:8787`, which is right behind a tunnel or Caddy.
-- For direct LAN access without a proxy, use `/sync init-hub 0.0.0.0 8787` and
+- For direct LAN access without a proxy, use `/session-sync init-hub 0.0.0.0 8787` and
   allow TCP 8787 on the Private profile.
 
 CLI fallback for automation, using the installed package:
 
 ```powershell
-node "$env:DSH_PROFILE_DIR\node_modules\@local\dsh-sync\bin\dsh-sync.mjs" init-hub
+node "$env:DSH_PROFILE_DIR\node_modules\@yamsengyi\dsh-session-sync\bin\session-sync.mjs" init-hub
 ```
 
 On later DSH starts the plugin reads `hub.json` and starts the hub
@@ -54,7 +54,7 @@ Get-NetTCPConnection -LocalPort 8787 | Select-Object LocalAddress,State
 2. In DSH, pair once:
 
 ```text
-/sync pair https://sync.example.com XXXX-XXXX laptop
+/session-sync pair https://sync.example.com XXXX-XXXX laptop
 ```
 
 `pair` exchanges the code for a device token, writes
@@ -65,16 +65,16 @@ plugin reads `client.json` and resumes.
 CLI fallback:
 
 ```powershell
-node "$env:DSH_PROFILE_DIR\node_modules\@local\dsh-sync\bin\dsh-sync.mjs" pair `
+node "$env:DSH_PROFILE_DIR\node_modules\@yamsengyi\dsh-session-sync\bin\session-sync.mjs" pair `
   --hub https://sync.example.com `
   --code XXXX-XXXX `
   --name laptop
 ```
 
-Check either side with `/sync status` or:
+Check either side with `/session-sync status` or:
 
 ```powershell
-node "$env:DSH_PROFILE_DIR\node_modules\@local\dsh-sync\bin\dsh-sync.mjs" status
+node "$env:DSH_PROFILE_DIR\node_modules\@yamsengyi\dsh-session-sync\bin\session-sync.mjs" status
 ```
 
 
@@ -88,8 +88,8 @@ node "$env:DSH_PROFILE_DIR\node_modules\@local\dsh-sync\bin\dsh-sync.mjs" status
 
 ```powershell
 cloudflared tunnel login
-cloudflared tunnel create dsh-sync
-cloudflared tunnel route dns dsh-sync sync.example.com
+cloudflared tunnel create dsh-session-sync
+cloudflared tunnel route dns dsh-session-sync sync.example.com
 ```
 
 `%ProgramData%\cloudflared\config.yml` (copy the credentials JSON beside it):
@@ -132,7 +132,7 @@ the certificate automatically.
 In DSH:
 
 ```text
-/sync init-hub 0.0.0.0 8787
+/session-sync init-hub 0.0.0.0 8787
 ```
 
 In an elevated PowerShell:
@@ -143,7 +143,7 @@ New-NetFirewallRule -DisplayName "DSH sync hub" -Direction Inbound `
   -Protocol TCP -LocalPort 8787 -Action Allow -Profile Private
 ```
 
-Clients pair with `/sync pair http://<server-lan-ip>:8787 <code> <name>`. This
+Clients pair with `/session-sync pair http://<server-lan-ip>:8787 <code> <name>`. This
 leg is plain HTTP; use it only on a trusted network.
 
 ## 4. Backup and restore
@@ -168,12 +168,12 @@ Example with DSH stopped:
 
 ```powershell
 $src = "$env:USERPROFILE\.dsh\dsh-sync"
-Compress-Archive -Path $src -DestinationPath "D:\backup\dsh-sync-$(Get-Date -Format yyyyMMdd).zip"
+Compress-Archive -Path $src -DestinationPath "D:\backup\dsh-session-sync-$(Get-Date -Format yyyyMMdd).zip"
 ```
 
 ## 5. Updates
 
-1. Push the new commit (and a tag) to `https://github.com/yamsengyi/dsh-sync`.
+1. Push the new commit (and a tag) to `https://github.com/yamsengyi/dsh-session-sync`.
 2. On each machine, use the bundle's **Update** action, or uninstall and install
    the GitHub URL again.
 3. Restart DSH to load the new module generation; restart is not needed for a
@@ -186,9 +186,9 @@ Compress-Archive -Path $src -DestinationPath "D:\backup\dsh-sync-$(Get-Date -For
 | No listener on 8787 | `hub.json` exists, DSH started, port not already used, bind host is a local address |
 | Client cannot reach the hub | Tunnel/Caddy status, DNS, firewall, network profile (Public blocks inbound) |
 | `401 unauthorized` | Re-pair; the device token is in `client.json` |
-| `403 pairing-code-invalid` | `/sync code` on the hub; rotate if leaked |
+| `403 pairing-code-invalid` | `/session-sync code` on the hub; rotate if leaked |
 | `426 protocol-mismatch` | Hub and client bundle versions differ; update both |
-| Pairing code lost | `/sync code rotate` on the hub (requires a running hub) |
+| Pairing code lost | `/session-sync code rotate` on the hub (requires a running hub) |
 | Disk growth | `sessions/` grows with turns; prune old sessions at the hub if needed |
 
 ## 7. Security

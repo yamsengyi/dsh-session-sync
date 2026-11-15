@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Standalone dsh-sync hub.
+ * Standalone dsh-session-sync hub.
  *
  * The same `createHubServer` the DSH plugin uses, without a DSH Host: run it
  * on a domain server behind a TLS reverse proxy and point every client's
@@ -43,25 +43,25 @@ const port = Number(process.env.DSH_SYNC_PORT ?? 8787)
 const tokens = parseTokens(process.env.DSH_SYNC_TOKENS)
 
 if (!Number.isInteger(port) || port < 0 || port > 65535) {
-  console.error(`[dsh-sync] invalid DSH_SYNC_PORT: ${process.env.DSH_SYNC_PORT}`)
+  console.error(`[session-sync] invalid DSH_SYNC_PORT: ${process.env.DSH_SYNC_PORT}`)
   process.exit(1)
 }
 if (tokens.length === 0) {
-  console.warn('[dsh-sync] no preconfigured tokens; enroll devices with the pairing code')
+  console.warn('[session-sync] no preconfigured tokens; enroll devices with the pairing code')
 }
 
 const hub = await createHubServer({ dataDir, host, port, tokens, logger: console })
-console.log(`[dsh-sync] hub listening on ${hub.url} (data ${dataDir}, ${tokens.length} device token(s))`)
+console.log(`[session-sync] hub listening on ${hub.url} (data ${dataDir}, ${tokens.length} device token(s))`)
 const pairingCode = hub.pairingCode()
 if (pairingCode) {
-  console.log(`[dsh-sync] pairing code: ${pairingCode} (also in ${join(dataDir, 'pairing-code.txt')})`)
+  console.log(`[session-sync] pairing code: ${pairingCode} (also in ${join(dataDir, 'pairing-code.txt')})`)
 }
 
 let closing = false
 async function shutdown(signal) {
   if (closing) return
   closing = true
-  console.log(`[dsh-sync] ${signal} received; closing`)
+  console.log(`[session-sync] ${signal} received; closing`)
   try {
     await hub.close()
   } finally {

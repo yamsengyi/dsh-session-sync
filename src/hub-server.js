@@ -639,7 +639,7 @@ export async function createHubServer(options) {
   const server = createServer((request, response) => {
     handle(request, response).catch((error) => {
       if (!(error instanceof SyncHttpError) || error.status >= 500) {
-        logger.error?.(`[dsh-sync] ${request.method} ${request.url} failed: ${error?.stack ?? error}`)
+        logger.error?.(`[session-sync] ${request.method} ${request.url} failed: ${error?.stack ?? error}`)
       }
       sendError(response, error)
     })

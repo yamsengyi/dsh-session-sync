@@ -1,22 +1,22 @@
 {
-  "name": "@local/dsh-sync",
-  "version": "0.1.0",
+  "name": "@yamsengyi/dsh-session-sync",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Personal sync hub for DSH sessions and workspace snapshots",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yamsengyi/dsh-sync.git"
+    "url": "https://github.com/yamsengyi/dsh-session-sync.git"
   },
-  "homepage": "https://github.com/yamsengyi/dsh-sync#readme",
+  "homepage": "https://github.com/yamsengyi/dsh-session-sync#readme",
   "exports": {
     ".": "./index.js",
     "./locale/*.json": "./locale/*.json",
     "./icon": "./icon.svg"
   },
   "bin": {
-    "dsh-sync": "./bin/dsh-sync.mjs",
-    "dsh-sync-hub": "./bin/hub.mjs"
+    "dsh-session-sync": "./bin/session-sync.mjs",
+    "dsh-session-sync-hub": "./bin/hub.mjs"
   },
   "files": [
     "index.js",
@@ -28,6 +28,9 @@
     "icon.svg",
     "README.md"
   ],
+  "engines": {
+    "dsh": ">=0.2.2-rc.3 <0.3.0"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"

@@ -1,8 +1,8 @@
 /**
- * dsh-sync: a personal hub for DSH sessions and workspace snapshots.
+ * dsh-session-sync: a personal hub for DSH sessions and workspace snapshots.
  *
  * `role: auto` resolves at startup from two marker files in the data directory:
- * `hub.json` starts the hub, `client.json` (written by `dsh-sync pair`) makes
+ * `hub.json` starts the hub, `client.json` (written by `/session-sync pair`) makes
  * this machine a client. Neither file leaves the plugin inert, so installing
  * the bundle never changes behavior until `init-hub` or `pair` runs.
  *
@@ -19,7 +19,7 @@ import { createHubServer } from './src/hub-server.js'
 import { SyncClient } from './src/sync-client.js'
 import { SyncHttpError, sha256Hex } from './src/protocol.js'
 
-export const name = 'dsh-sync'
+export const name = 'session-sync'
 
 /** Session persistence supplies the backfill read; commands host the one-time setup. */
 export const inject = ['sessionPersistence', 'commands']
@@ -35,12 +35,12 @@ function normalizeConfig(raw) {
   const config = raw && typeof raw === 'object' ? raw : {}
   const role = config.role ?? 'auto'
   if (role !== 'auto' && role !== 'client' && role !== 'hub' && role !== 'idle') {
-    throw new Error(`[dsh-sync] role must be "auto", "client", "hub", or "idle", received ${JSON.stringify(role)}`)
+    throw new Error(`[session-sync] role must be "auto", "client", "hub", or "idle", received ${JSON.stringify(role)}`)
   }
   const hubHost = String(config.hubHost ?? '127.0.0.1')
   const hubPort = Number(config.hubPort ?? 8787)
   if (!Number.isInteger(hubPort) || hubPort < 0 || hubPort > 65535) {
-    throw new Error(`[dsh-sync] hubPort must be an integer between 0 and 65535, received ${JSON.stringify(config.hubPort)}`)
+    throw new Error(`[session-sync] hubPort must be an integer between 0 and 65535, received ${JSON.stringify(config.hubPort)}`)
   }
   const rawTokens = Array.isArray(config.hubTokens) ? config.hubTokens : []
   const tokens = rawTokens.map((entry) => {
@@ -48,7 +48,7 @@ function normalizeConfig(raw) {
       return { name: String(entry.name ?? 'device'), token: entry.token }
     }
     if (typeof entry === 'string' && entry.length > 0) return { name: 'device', token: entry }
-    throw new Error('[dsh-sync] every hubTokens entry must be a token string or { name, token }')
+    throw new Error('[session-sync] every hubTokens entry must be a token string or { name, token }')
   })
   return {
     role,
@@ -133,7 +133,7 @@ export async function initFolder(root, folderId) {
   if (existing) return existing.folderId
   const id = folderId ?? `${slugify(basename(root))}-${sha256Hex(root).slice(0, 6)}`
   if (!FOLDER_ID.test(id)) {
-    throw new Error(`[dsh-sync] folderId must match ${FOLDER_ID}: ${JSON.stringify(id)}`)
+    throw new Error(`[session-sync] folderId must match ${FOLDER_ID}: ${JSON.stringify(id)}`)
   }
   await writeFile(
     join(root, MARKER_FILE),
@@ -155,7 +155,7 @@ export async function apply(ctx, raw) {
   const clientConfigPath = join(dataDir, 'client.json')
 
   if (config.role === 'idle') {
-    logger.info?.('[dsh-sync] role idle; nothing to do')
+    logger.info?.('[session-sync] role idle; nothing to do')
     return
   }
 
@@ -180,9 +180,9 @@ export async function apply(ctx, raw) {
       const port = hubConfig?.port ?? config.hubPort
       const hub = await createHubServer({ dataDir: hubDataDir, host, port, tokens: config.tokens, logger })
       runtime.hub = hub
-      logger.info?.(`[dsh-sync] hub listening on ${hub.url} (${config.tokens.length} configured token(s))`)
+      logger.info?.(`[session-sync] hub listening on ${hub.url} (${config.tokens.length} configured token(s))`)
       const code = hub.pairingCode()
-      if (code) logger.info?.(`[dsh-sync] pairing code: ${code} (${join(hubDataDir, 'pairing-code.txt')})`)
+      if (code) logger.info?.(`[session-sync] pairing code: ${code} (${join(hubDataDir, 'pairing-code.txt')})`)
       return hub
     })()
     try {
@@ -196,7 +196,7 @@ export async function apply(ctx, raw) {
     const hub = runtime.hub
     runtime.hub = null
     if (!hub) return
-    logger.info?.('[dsh-sync] hub stopped')
+    logger.info?.('[session-sync] hub stopped')
     await hub.close()
   }
 
@@ -253,7 +253,7 @@ export async function apply(ctx, raw) {
         events = [...backfill, ...pending]
       }
       if (events[0]?.seq !== head) {
-        logger.warn?.(`[dsh-sync] ${session.id}: cannot align local seq ${events[0]?.seq} with hub head ${head}`)
+        logger.warn?.(`[session-sync] ${session.id}: cannot align local seq ${events[0]?.seq} with hub head ${head}`)
         return
       }
       const result = await client.pushSession({ header: buffer.header, events, expectHead: head })
@@ -262,7 +262,7 @@ export async function apply(ctx, raw) {
       if (error instanceof SyncHttpError && error.status === 409) {
         runtime.dirty.add(session.id)
       } else {
-        logger.warn?.(`[dsh-sync] ${session.id}: push failed: ${describe(error)}`)
+        logger.warn?.(`[session-sync] ${session.id}: push failed: ${describe(error)}`)
       }
     } finally {
       runtime.pushing.delete(session.id)
@@ -296,7 +296,7 @@ export async function apply(ctx, raw) {
     try {
       marker = await readMarker(cwd)
     } catch (error) {
-      logger.warn?.(`[dsh-sync] cannot read ${MARKER_FILE} under ${cwd}: ${describe(error)}`)
+      logger.warn?.(`[session-sync] cannot read ${MARKER_FILE} under ${cwd}: ${describe(error)}`)
       return
     }
     // Only a workspace that carries the marker opts into automatic commits.
@@ -311,10 +311,10 @@ export async function apply(ctx, raw) {
       })
       state.at = Date.now()
       if (!result.skipped) {
-        logger.info?.(`[dsh-sync] checkpoint ${marker.folderId} v${result.version} (${result.fileCount} files)`)
+        logger.info?.(`[session-sync] checkpoint ${marker.folderId} v${result.version} (${result.fileCount} files)`)
       }
     } catch (error) {
-      logger.warn?.(`[dsh-sync] checkpoint ${marker.folderId} failed: ${describe(error)}`)
+      logger.warn?.(`[session-sync] checkpoint ${marker.folderId} failed: ${describe(error)}`)
     } finally {
       state.running = false
     }
@@ -327,7 +327,7 @@ export async function apply(ctx, raw) {
     if (!hubUrl || !token) return undefined
     runtime.deviceName = settings?.deviceName || config.deviceName
     runtime.client = new SyncClient({ baseUrl: hubUrl, token, logger })
-    logger.info?.(`[dsh-sync] client pushing to ${hubUrl}`)
+    logger.info?.(`[session-sync] client pushing to ${hubUrl}`)
     return runtime.client
   }
 
@@ -361,7 +361,7 @@ export async function apply(ctx, raw) {
       try {
         await startHub(hubConfig)
       } catch (error) {
-        logger.error?.(`[dsh-sync] hub failed to start: ${describe(error)}`)
+        logger.error?.(`[session-sync] hub failed to start: ${describe(error)}`)
       }
     } else if (runtime.hub) {
       await stopHub()
@@ -376,7 +376,7 @@ export async function apply(ctx, raw) {
     } else if (!wantClient) {
       stopClient()
     } else if (wantClient && !settings) {
-      logger.info?.('[dsh-sync] client idle: no hubUrl/token')
+      logger.info?.('[session-sync] client idle: no hubUrl/token')
     }
   }
 
@@ -428,7 +428,7 @@ export async function apply(ctx, raw) {
     const watcher = watch(dataDir, () => {
       clearTimeout(debounce)
       debounce = setTimeout(() => {
-        void resolveRoles().catch((error) => logger.warn?.(`[dsh-sync] marker reload failed: ${describe(error)}`))
+        void resolveRoles().catch((error) => logger.warn?.(`[session-sync] marker reload failed: ${describe(error)}`))
       }, MARKER_DEBOUNCE_MS)
       debounce.unref?.()
     })
@@ -449,7 +449,7 @@ export async function apply(ctx, raw) {
 
   if (ctx.commands?.register) {
     const dispose = ctx.commands.register({
-      name: 'sync',
+      name: 'session-sync',
       description: 'Set up or inspect session and workspace sync',
       input: {
         hint: 'init-hub [host] [port] | pair <hub-url> <code> [name] | status | code [rotate]',
@@ -479,14 +479,14 @@ export async function apply(ctx, raw) {
             if (!runtime.hub) return { kind: 'error', text: 'hub did not start; check the DSH log' }
             return {
               kind: 'success',
-              text: `Hub started on ${runtime.hub.url}\nPairing code: ${runtime.hub.pairingCode()}\nPair a client with: /sync pair <hub-url> <code> <name>`,
+              text: `Hub started on ${runtime.hub.url}\nPairing code: ${runtime.hub.pairingCode()}\nPair a client with: /session-sync pair <hub-url> <code> <name>`,
             }
           }
           if (subcommand === 'pair') {
             const hubUrl = argv[1]
             const code = argv[2]
             const name = argv[3] || hostname()
-            if (!hubUrl || !code) return { kind: 'error', text: 'usage: /sync pair <hub-url> <code> [name]' }
+            if (!hubUrl || !code) return { kind: 'error', text: 'usage: /session-sync pair <hub-url> <code> [name]' }
             const response = await fetch(`${hubUrl.replace(/\/+$/, '')}/v1/pair`, {
               method: 'POST',
               headers: { 'content-type': 'application/json' },
@@ -527,7 +527,7 @@ export async function apply(ctx, raw) {
           }
           return {
             kind: 'error',
-            text: 'usage: /sync init-hub [host] [port] | pair <hub-url> <code> [name] | status | code [rotate]',
+            text: 'usage: /session-sync init-hub [host] [port] | pair <hub-url> <code> [name] | status | code [rotate]',
           }
         } catch (error) {
           return { kind: 'error', text: describe(error) }

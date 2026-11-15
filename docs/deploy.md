@@ -13,13 +13,13 @@ server reached through a domain, while clients keep the same protocol.
 client PCs ──HTTPS──► sync.example.com (Caddy/nginx, TLS)
                               │ 127.0.0.1:8787
                               ▼
-                      dsh-sync hub (Node)
-                      /var/lib/dsh-sync
+                      dsh-session-sync hub (Node)
+                      /var/lib/dsh-session-sync
 ```
 
 - The hub binds loopback only; the proxy terminates TLS and is the only
   internet-facing listener.
-- Clients enroll once with a pairing code (`dsh-sync pair --hub https://...`).
+- Clients enroll once with a pairing code (`bin/session-sync.mjs pair --hub https://...`).
 - The hub keeps bearer-token auth; TLS protects the transport.
 
 ## Run it
@@ -27,14 +27,14 @@ client PCs ──HTTPS──► sync.example.com (Caddy/nginx, TLS)
 Use Node 22+ on the server. The hub has no dependencies.
 
 ```sh
-DSH_SYNC_DATA_DIR=/var/lib/dsh-sync \
+DSH_SYNC_DATA_DIR=/var/lib/dsh-session-sync \
 DSH_SYNC_HOST=127.0.0.1 \
 DSH_SYNC_PORT=8787 \
-node /opt/dsh-sync/bin/hub.mjs
+node /opt/dsh-session-sync/bin/hub.mjs
 ```
 
 The first start creates `pairing-code.txt` in the data directory; enroll each
-device with `bin/dsh-sync.mjs pair`. Preconfigured `DSH_SYNC_TOKENS` (a
+device with `bin/session-sync.mjs pair`. Preconfigured `DSH_SYNC_TOKENS` (a
 `name:token` list or a JSON array) still work as an alternative, and the two
 sources can be mixed.
 
@@ -46,12 +46,12 @@ Description=DSH sync hub
 After=network.target
 
 [Service]
-User=dsh-sync
-Environment=DSH_SYNC_DATA_DIR=/var/lib/dsh-sync
+User=dsh-session-sync
+Environment=DSH_SYNC_DATA_DIR=/var/lib/dsh-session-sync
 Environment=DSH_SYNC_HOST=127.0.0.1
 Environment=DSH_SYNC_PORT=8787
 Environment=DSH_SYNC_TOKENS=home-pc:TOKEN_A,laptop:TOKEN_B
-ExecStart=/usr/bin/node /opt/dsh-sync/bin/hub.mjs
+ExecStart=/usr/bin/node /opt/dsh-session-sync/bin/hub.mjs
 Restart=always
 RestartSec=3
 
@@ -98,7 +98,7 @@ server {
 ```
 
 Mount the hub at a dedicated hostname root. If you must serve it under a
-prefix such as `/sync/`, strip the prefix at the proxy; the hub only knows
+prefix such as `/session-sync/`, strip the prefix at the proxy; the hub only knows
 `/v1/...`.
 
 ## Migrate from the home-PC hub
@@ -106,7 +106,7 @@ prefix such as `/sync/`, strip the prefix at the proxy; the hub only knows
 1. Stop the old hub (or let it keep serving read-only).
 2. Copy the storage directory:
    ```sh
-   rsync -a ~/.dsh/dsh-sync/hub/ server:/var/lib/dsh-sync/
+   rsync -a ~/.dsh/dsh-sync/hub/ server:/var/lib/dsh-session-sync/
    ```
    It contains `sessions/` and `folders/`; blobs and manifests travel with it.
 3. Configure the same device tokens on the server (rotate them if the old ones
@@ -128,7 +128,7 @@ prefix such as `/sync/`, strip the prefix at the proxy; the hub only knows
   and rotate on suspicion.
 - The body cap is 256 MiB per request. A very long first backfill can be split
   by pushing more often; ordinary turns are small.
-- Back up `/var/lib/dsh-sync` (sessions, checkpoints, blobs). It is the only
+- Back up `/var/lib/dsh-session-sync` (sessions, checkpoints, blobs). It is the only
   state the hub owns.
 - The hub is single-tenant by design: one person, several devices. Do not put
   different people's workspaces on one token set.

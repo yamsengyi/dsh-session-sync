@@ -259,7 +259,7 @@ test('the sync command initializes a hub, pairs, and starts syncing', async (t) 
   })
 
   await apply(ctx, { role: 'auto', dataDir, autoPush: true, autoCheckpoint: false })
-  const command = ctx.commands.definitions.get('sync')
+  const command = ctx.commands.definitions.get('session-sync')
   assert.ok(command, 'sync command is registered')
 
   const signal = new AbortController().signal

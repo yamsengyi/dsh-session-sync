@@ -48,13 +48,13 @@ for the server's DSH agent.
 ### Setup
 
 Install it from GitHub: **Plugins → Add plugin**, then paste
-`https://github.com/yamsengyi/dsh-sync` (the Registry dropdown does not apply to
-a GitHub URL). Reload DSH once. Then, inside DSH:
+`https://github.com/yamsengyi/dsh-session-sync` (the Registry dropdown does not
+apply to a GitHub URL). Reload DSH once. Then, inside DSH:
 
 Server, once:
 
 ```text
-/sync init-hub
+/session-sync init-hub
 ```
 
 It writes `hub.json`, starts the hub immediately, and returns the pairing code.
@@ -63,16 +63,16 @@ No terminal and no restart are needed.
 Client, once after installing the bundle:
 
 ```text
-/sync pair https://sync.example.com XXXX-XXXX laptop
+/session-sync pair https://sync.example.com XXXX-XXXX laptop
 ```
 
 `pair` exchanges the code for a device token, writes `client.json`, and starts
-syncing immediately. `/sync status` reports the current state and
-`/sync code [rotate]` manages the code.
+syncing immediately. `/session-sync status` reports the current state and
+`/session-sync code [rotate]` manages the code.
 
-The CLI (`bin/dsh-sync.mjs init-hub|pair|status|code`) remains for automation
-and for a DSH agent that prefers shell commands. Marker files are watched, so a
-CLI write also applies without restarting DSH.
+The CLI (`bin/session-sync.mjs init-hub|pair|status|code`) remains for
+automation and for a DSH agent that prefers shell commands. Marker files are
+watched, so a CLI write also applies without restarting DSH.
 
 ## Opting a workspace in
 

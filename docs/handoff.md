@@ -18,40 +18,40 @@ prompt or run the elevated commands (tunnel service, firewall).
 ## Prompt
 
 ```text
-You are on a Windows machine that will host the dsh-sync hub for one person's
+You are on a Windows machine that will host the dsh-session-sync hub for one person's
 PCs. Use a native setup; do not use Docker.
 
 Install source (public GitHub repository):
-  https://github.com/yamsengyi/dsh-sync
+  https://github.com/yamsengyi/dsh-session-sync
 
 Do this and report every deviation:
 1. Install the bundle into this DSH profile. Prefer your plugin_manager tool
    with action `install_bundle` and that GitHub URL as the target. The Registry
    dropdown does not apply to a GitHub URL. If the tool is not available, tell
    the operator to use Plugins > Add plugin and paste the same URL.
-2. Reload DSH once so the plugin code and /sync command load.
+2. Reload DSH once so the plugin code and /session-sync command load.
 3. Ask the operator to run this in DSH (or, if you have a Node executable, run
    the installed CLI yourself):
-     /sync init-hub
+     /session-sync init-hub
    This writes %USERPROFILE%\.dsh\dsh-sync\hub.json, starts the hub, and prints
-   a pairing code. Use `/sync init-hub 0.0.0.0 8787` only if clients must reach
+   a pairing code. Use `/session-sync init-hub 0.0.0.0 8787` only if clients must reach
    this machine directly on the LAN; then allow inbound TCP 8787 on the Private
    profile.
 4. Publish the hub at https://sync.example.com with Cloudflare Tunnel
    (preferred):
      cloudflared tunnel login
-     cloudflared tunnel create dsh-sync
-     cloudflared tunnel route dns dsh-sync sync.example.com
+     cloudflared tunnel create dsh-session-sync
+     cloudflared tunnel route dns dsh-session-sync sync.example.com
    Put the ingress for http://127.0.0.1:8787 in the cloudflared config, install
    or schedule the tunnel, and keep port 8787 closed to the internet.
    If Caddy is chosen instead: reverse_proxy 127.0.0.1:8787, open 80/443 only,
    and run Caddy at startup.
 5. Confirm the hub listener and read the pairing code from:
      %USERPROFILE%\.dsh\dsh-sync\hub\pairing-code.txt
-   (or `/sync code` in DSH).
+   (or `/session-sync code` in DSH).
 6. Verify:
      Invoke-RestMethod https://sync.example.com/v1/health
-     /sync pair https://sync.example.com <code> server-selftest
+     /session-sync pair https://sync.example.com <code> server-selftest
      Invoke-RestMethod https://sync.example.com/v1/sessions -Headers @{ Authorization = "Bearer <token from client.json>" }
    Health must be 200 and the authenticated list must be 200. Delete the
    server-selftest client.json afterwards if it is not wanted.
@@ -72,10 +72,10 @@ Constraints:
 ## What the operator still does
 
 - Approve any UAC prompt for the tunnel service or firewall rule.
-- Type `/sync init-hub` on the server if the agent cannot run a human command.
+- Type `/session-sync init-hub` on the server if the agent cannot run a human command.
 - Read the pairing code and hand it to each client once.
 - On each client, install the same GitHub URL and type
-  `/sync pair <hub-url> <code> <name>`; no terminal is needed.
+  `/session-sync pair <hub-url> <code> <name>`; no terminal is needed.
 
 ## What the agent should not decide
 

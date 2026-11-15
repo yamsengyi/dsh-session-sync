@@ -85,7 +85,7 @@ export async function scanWorkspace(root, options = {}) {
   files.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
   dirs.sort()
   if (logger && warnings.length > 0) {
-    for (const warning of warnings) logger.warn?.(`[dsh-sync] ${warning.path}: ${warning.reason}`)
+    for (const warning of warnings) logger.warn?.(`[session-sync] ${warning.path}: ${warning.reason}`)
   }
   return { root, files, dirs, warnings }
 }

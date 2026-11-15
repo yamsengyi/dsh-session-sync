@@ -1,15 +1,15 @@
-# dsh-sync bundle patch.
+# dsh-session-sync bundle patch.
 #
 # role: auto resolves at startup:
 #   - $DSH_HOME/dsh-sync/hub.json    -> start the hub
 #   - $DSH_HOME/dsh-sync/client.json -> sync as a paired client
 #   - neither                        -> inert
 # One-time setup inside DSH:
-#   /sync init-hub                  (server; starts the hub, returns a code)
-#   /sync pair <url> <code> <name>  (each client; writes client.json)
+#   /session-sync init-hub                  (server; starts the hub, returns a code)
+#   /session-sync pair <url> <code> <name>  (each client; writes client.json)
 - insert:
-    - id: dsh-sync
-      name: '@local/dsh-sync'
+    - id: session-sync
+      name: '@yamsengyi/dsh-session-sync'
       config:
         role: auto
         hubUrl: ''

@@ -1,4 +1,9 @@
-# dsh-sync protocol v1
+# dsh-session-sync protocol v1
+
+The package, plugin, and command were renamed from the earlier `dsh-sync`
+working name. The wire header `X-DSH-Sync-Protocol`, the `.dsh-sync/` state
+directory, and the `.dsh-sync.json` workspace marker keep their names so data
+written before the rename continues to work.
 
 Status: local MVP. The hub and the client are the same Node package; the wire
 format is plain JSON plus raw blobs so a different hub implementation can

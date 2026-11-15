@@ -89,6 +89,14 @@ test('hub role starts a listener and closes on dispose', async (t) => {
   const health = await fetch(`http://127.0.0.1:${port}/v1/health`)
   assert.equal(health.status, 200)
 
+  const selfConfig = JSON.parse(await readFile(join(dataDir, 'self-client.json'), 'utf8'))
+  assert.equal(selfConfig.selfHost, true)
+  assert.ok(selfConfig.token)
+  const selfList = await fetch(`http://127.0.0.1:${port}/v1/sessions`, {
+    headers: { authorization: `Bearer ${selfConfig.token}` },
+  })
+  assert.equal(selfList.status, 200)
+
   ctx.dispose()
   await new Promise((resolve) => setTimeout(resolve, 100))
   await assert.rejects(fetch(`http://127.0.0.1:${port}/v1/health`))
@@ -299,4 +307,5 @@ test('the sync command initializes a hub, pairs, and starts syncing', async (t) 
   }
   assert.equal(head, 2)
 })
+
 

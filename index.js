@@ -161,6 +161,7 @@ export async function apply(ctx, raw) {
   const dataDir = config.dataDir || defaultDataDir()
   const hubConfigPath = join(dataDir, 'hub.json')
   const clientConfigPath = join(dataDir, 'client.json')
+  const selfClientConfigPath = join(dataDir, 'self-client.json')
   const uiStatePath = join(dataDir, 'ui.json')
   const updateStatePath = join(dataDir, 'update-check.json')
 
@@ -185,6 +186,7 @@ export async function apply(ctx, raw) {
   const runtime = {
     hub: null,
     client: null,
+    clientKind: null,
     deviceName: config.deviceName,
     buffers: new Map(),
     pushing: new Set(),
@@ -343,24 +345,86 @@ export async function apply(ctx, raw) {
     }
   }
 
-  const startClient = (settings) => {
+  const startClient = (settings, kind = 'external') => {
     if (runtime.client) return runtime.client
     const hubUrl = settings?.hubUrl || (runtime.hub ? loopbackUrl(runtime.hub.host, runtime.hub.port) : '')
     const token = settings?.token || ''
     if (!hubUrl || !token) return undefined
     runtime.deviceName = settings?.deviceName || config.deviceName
     runtime.client = new SyncClient({ baseUrl: hubUrl, token, logger })
-    logger.info?.(`[session-sync] client pushing to ${hubUrl}`)
+    runtime.clientKind = kind
+    logger.info?.(`[session-sync] ${kind} client pushing to ${hubUrl}`)
     return runtime.client
   }
 
   const stopClient = () => {
     runtime.client = null
+    runtime.clientKind = null
     for (const timer of runtime.timers.values()) clearTimeout(timer)
     runtime.timers.clear()
     runtime.buffers.clear()
     runtime.pushing.clear()
     runtime.dirty.clear()
+  }
+
+  /**
+   * A Host is also a sync source: its own sessions and workspace must reach
+   * the hub it serves. Mint (or reuse) a local device token and run an
+   * in-process client against this listener. The external paired client stays
+   * in client.json for a later Client-mode switch.
+   */
+  const ensureSelfClient = async (hub) => {
+    const hubUrl = hub.url
+    let saved
+    try {
+      saved = await readJsonIfExists(selfClientConfigPath)
+    } catch {
+      saved = undefined
+    }
+    let token = saved?.token
+    let valid = false
+    if (token) {
+      try {
+        const response = await fetch(`${hubUrl}/v1/sessions`, {
+          headers: { authorization: `Bearer ${token}` },
+          signal: AbortSignal.timeout(2_000),
+        })
+        valid = response.ok
+      } catch {
+        valid = false
+      }
+    }
+    if (!valid) {
+      const issued = await hub.store.addDevice('host-self')
+      token = issued.token
+    }
+    const settings = {
+      hubUrl,
+      token,
+      deviceName: saved?.deviceName || config.deviceName,
+    }
+    const same = runtime.clientKind === 'self'
+      && runtime.client?.baseUrl === hubUrl
+      && runtime.client?.token === token
+    if (!same) {
+      stopClient()
+      await mkdir(dataDir, { recursive: true })
+      await writeJsonAtomic(selfClientConfigPath, {
+        ...settings,
+        enabled: true,
+        selfHost: true,
+        pairedAt: saved?.pairedAt ?? new Date().toISOString(),
+      })
+      startClient(settings, 'self')
+    } else if (!saved) {
+      await mkdir(dataDir, { recursive: true })
+      await writeJsonAtomic(selfClientConfigPath, {
+        ...settings,
+        enabled: true,
+        selfHost: true,
+        pairedAt: new Date().toISOString(),
+      })
+    }
   }
 
   const resolveRolesNow = async () => {
@@ -374,35 +438,51 @@ export async function apply(ctx, raw) {
     const clientConfigured = clientConfig
       ? clientConfig.enabled !== false
       : Boolean(fallback)
-    const wantHub = config.role === 'hub' || (config.role === 'auto' && hubEnabled)
+    const wantHost = config.role === 'hub' || (config.role === 'auto' && hubEnabled)
+    // A Host owns its own upload path through the self client; an external
+    // client.json is used only in Client mode (or when no hub is enabled).
     const wantClient = config.role === 'client'
-      || ((config.role === 'auto' || config.role === 'hub') && clientConfigured)
+      || (config.role === 'auto' && !hubEnabled && clientConfigured)
 
-    if (wantHub) {
+    if (wantHost) {
       const desiredHost = hubConfig?.host ?? config.hubHost
       const desiredPort = hubConfig?.port ?? config.hubPort
       if (runtime.hub && (runtime.hub.host !== desiredHost || runtime.hub.port !== desiredPort)) {
         await stopHub()
       }
+      let hub = null
       try {
-        await startHub(hubConfig)
+        hub = await startHub(hubConfig)
       } catch (error) {
         logger.error?.(`[session-sync] hub failed to start: ${describe(error)}`)
       }
-    } else if (runtime.hub) {
-      await stopHub()
+      if (hub) {
+        try {
+          await ensureSelfClient(hub)
+        } catch (error) {
+          logger.error?.(`[session-sync] self client failed to start: ${describe(error)}`)
+          stopClient()
+        }
+      } else {
+        stopClient()
+      }
+    } else {
+      if (runtime.clientKind === 'self') stopClient()
+      if (runtime.hub) await stopHub()
     }
 
-    const sameClient = runtime.client && settings
-      && runtime.client.baseUrl === settings.hubUrl
-      && runtime.client.token === settings.token
-    if (wantClient && settings && !sameClient) {
+    if (!wantHost && wantClient) {
+      const sameClient = runtime.clientKind === 'external' && runtime.client && settings
+        && runtime.client.baseUrl === settings.hubUrl
+        && runtime.client.token === settings.token
+      if (settings && !sameClient) {
+        stopClient()
+        startClient(settings, 'external')
+      } else if (!settings) {
+        logger.info?.('[session-sync] client idle: no hubUrl/token')
+      }
+    } else if (!wantHost) {
       stopClient()
-      startClient(settings)
-    } else if (!wantClient) {
-      stopClient()
-    } else if (wantClient && !settings) {
-      logger.info?.('[session-sync] client idle: no hubUrl/token')
     }
   }
 
@@ -616,6 +696,7 @@ export async function apply(ctx, raw) {
   const readStatus = async () => {
     const hubConfig = await readJsonIfExists(hubConfigPath)
     const clientConfig = await readJsonIfExists(clientConfigPath)
+    const selfConfig = await readJsonIfExists(selfClientConfigPath)
     const ui = await readUi()
     let marker
     let baseline = false
@@ -641,7 +722,9 @@ export async function apply(ctx, raw) {
     const runningHub = runtime.hub
     const hubEnabled = Boolean(hubConfig) && hubConfig.enabled !== false
     const clientEnabled = Boolean(clientConfig) && clientConfig.enabled !== false
-    const mode = hubEnabled && clientEnabled ? 'both' : hubEnabled ? 'host' : clientEnabled ? 'client' : 'off'
+    const selfActive = runtime.clientKind === 'self'
+    const activeClient = selfActive ? selfConfig : clientConfig
+    const mode = hubEnabled ? 'host' : clientEnabled ? 'client' : 'off'
     let update
     try {
       update = await readJsonIfExists(updateStatePath)
@@ -663,11 +746,12 @@ export async function apply(ctx, raw) {
         pairingCode: runningHub?.pairingCode() ?? null,
       },
       client: {
-        paired: Boolean(clientConfig),
-        enabled: clientEnabled,
+        paired: selfActive ? Boolean(selfConfig) : Boolean(clientConfig),
+        enabled: selfActive ? true : clientEnabled,
         running: Boolean(runtime.client),
-        hubUrl: clientConfig?.hubUrl ?? null,
-        deviceName: clientConfig?.deviceName ?? null,
+        self: selfActive,
+        hubUrl: activeClient?.hubUrl ?? null,
+        deviceName: activeClient?.deviceName ?? null,
       },
       workspace: {
         path: ui.workspacePath ?? null,
@@ -686,15 +770,15 @@ export async function apply(ctx, raw) {
 
   const setMode = async (body) => {
     const mode = String(body?.mode ?? '')
-    if (mode !== 'host' && mode !== 'client' && mode !== 'both' && mode !== 'off') {
-      throw new SyncHttpError(400, 'invalid-mode', 'mode must be host, client, both, or off')
+    if (mode !== 'host' && mode !== 'client' && mode !== 'off') {
+      throw new SyncHttpError(400, 'invalid-mode', 'mode must be host, client, or off')
     }
     const hubConfig = await readJsonIfExists(hubConfigPath)
     const clientConfig = await readJsonIfExists(clientConfigPath)
-    if ((mode === 'client' || mode === 'both') && !clientConfig) {
+    if (mode === 'client' && !clientConfig) {
       throw new SyncHttpError(409, 'not-paired', 'pair this machine first')
     }
-    const wantsHub = mode === 'host' || mode === 'both'
+    const wantsHub = mode === 'host'
     const port = Number(body?.port ?? hubConfig?.port ?? config.hubPort)
     if (wantsHub && (!Number.isInteger(port) || port < 1 || port > 65535)) {
       throw new SyncHttpError(400, 'invalid-port', 'port must be 1..65535')
@@ -717,10 +801,10 @@ export async function apply(ctx, raw) {
         port: hubConfig.port ?? port,
       })
     }
-    if (clientConfig) {
+    if (clientConfig && mode !== 'host') {
       await writeJsonAtomic(clientConfigPath, {
         ...clientConfig,
-        enabled: mode === 'client' || mode === 'both',
+        enabled: mode === 'client',
       })
     }
     await resolveRoles()

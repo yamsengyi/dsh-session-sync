@@ -19,7 +19,7 @@ The server must have DSH running for the hub to be reachable.
 2. Reload DSH once so the plugin code, the client section, and the
    `/session-sync` command load.
 3. Open **Settings → Session sync**:
-   - choose mode **Host** (or **Both**),
+   - choose mode **Host**,
    - set port `8787`,
    - choose bind `127.0.0.1` (proxy/tunnel) or `0.0.0.0` (direct LAN),
    - press **Apply**. The current state badge shows the running hub, and the
@@ -45,7 +45,7 @@ Get-NetTCPConnection -LocalPort 8787 | Select-Object LocalAddress,State
 
 1. Install the same GitHub URL on the client and reload DSH once.
 2. Open **Settings → Session sync**:
-   - choose mode **Client** (or **Both**),
+   - choose mode **Client**,
    - enter the target URL in one line, for example
      `https://sync.example.com` or `http://11.11.1.77:8787`,
    - use **Use host info** when the host is this machine to fill the URL and
@@ -123,7 +123,7 @@ the certificate automatically.
 
 ### LAN only
 
-In **Settings → Session sync**, choose mode **Host** (or **Both**), set bind
+In **Settings → Session sync**, choose mode **Host**, set bind
 `0.0.0.0`, set the port, and press **Apply** (or run
 `/session-sync init-hub 0.0.0.0 8787`).
 
@@ -136,7 +136,7 @@ New-NetFirewallRule -DisplayName "DSH sync hub" -Direction Inbound `
 ```
 
 Clients enter `http://<server-lan-ip>:8787` and the pairing code in
-**Settings → Session sync** (mode Client or Both). This leg is plain HTTP; use
+**Settings → Session sync** (mode Client). This leg is plain HTTP; use
 it only on a trusted network.
 
 ## 4. Backup and restore
@@ -192,3 +192,4 @@ Compress-Archive -Path $src -DestinationPath "D:\backup\dsh-session-sync-$(Get-D
 - The hub is single-tenant: one person, several devices. Do not share one hub
   between different people's workspaces.
 - TLS protects the transport; keep the tunnel/Caddy certificate healthy.
+

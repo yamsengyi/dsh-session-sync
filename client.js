@@ -20,7 +20,7 @@ window.__ModuleLoader__.load({
 
     const API = 'session-sync/api/'
     const LOCALE_KEY = 'dsh-session-sync.locale'
-    const MODES = ['host', 'client', 'both', 'off']
+    const MODES = ['host', 'client', 'off']
 
     const STRINGS = {
       en: {
@@ -35,14 +35,17 @@ window.__ModuleLoader__.load({
         'current.loading': 'Loading',
         'current.both': 'Host + client running',
         'current.host': 'Host running',
+        'current.hostSelf': 'Host running (self-sync)',
         'current.client': 'Client running',
         'current.off': 'Off',
         'current.stopped': 'Stopped',
         pendingApply: 'Pending apply',
+        'currentStatus': 'Current: {state}',
         'host.heading': 'Host settings',
         'host.port': 'Port',
         'host.bind': 'Bind address',
         'host.running': 'Running: {url}',
+        'host.selfSync': "This machine's sessions and workspace are also uploaded to its own hub.",
         'host.configuredStopped': 'Configured · stopped (apply mode to start)',
         'host.startHint': 'Starts after you apply the mode.',
         'host.pairingCode': 'Pairing code',
@@ -108,14 +111,17 @@ window.__ModuleLoader__.load({
         'current.loading': '加载中',
         'current.both': '主机 + 客户端运行中',
         'current.host': '主机运行中',
+        'current.hostSelf': '主机运行中（含本机同步）',
         'current.client': '客户端运行中',
         'current.off': '关闭',
         'current.stopped': '已停止',
         pendingApply: '待应用',
+        'currentStatus': '当前：{state}',
         'host.heading': '主机设置',
         'host.port': '端口',
         'host.bind': '绑定地址',
         'host.running': '运行中：{url}',
+        'host.selfSync': '本机的会话和工作区也会上传到自己的中枢。',
         'host.configuredStopped': '已配置 · 已停止（应用模式后启动）',
         'host.startHint': '应用模式后启动。',
         'host.pairingCode': '配对码',
@@ -181,14 +187,17 @@ window.__ModuleLoader__.load({
         'current.loading': '불러오는 중',
         'current.both': '호스트 + 클라이언트 동작 중',
         'current.host': '호스트 동작 중',
+        'current.hostSelf': '호스트 동작 중 (본체 동기화 포함)',
         'current.client': '클라이언트 동작 중',
         'current.off': '꺼짐',
         'current.stopped': '중지됨',
         pendingApply: '적용 대기',
+        'currentStatus': '현재: {state}',
         'host.heading': '호스트 설정',
         'host.port': '포트',
         'host.bind': '바인딩 주소',
         'host.running': '실행 중: {url}',
+        'host.selfSync': '이 컴퓨터의 세션과 워크스페이스도 자체 허브로 업로드됩니다.',
         'host.configuredStopped': '설정됨 · 중지됨 (모드 적용으로 시작)',
         'host.startHint': '모드 적용 후 시작됩니다.',
         'host.pairingCode': '페어링 코드',
@@ -314,7 +323,7 @@ window.__ModuleLoader__.load({
 
     function currentLabel(status, t) {
       if (!status) return t('current.loading')
-      if (status.hub.running && status.client.running) return t('current.both')
+      if (status.hub.running && status.client?.self && status.client.running) return t('current.hostSelf')
       if (status.hub.running) return t('current.host')
       if (status.client.running) return t('current.client')
       return status.mode === 'off' ? t('current.off') : t('current.stopped')
@@ -524,8 +533,9 @@ window.__ModuleLoader__.load({
         writeLanguage(value)
       }
 
-      const showHost = mode === 'host' || mode === 'both'
-      const showClient = mode === 'client' || mode === 'both'
+      const showHost = mode === 'host'
+      const showClient = mode === 'client'
+      const showSync = mode === 'host' || mode === 'client'
       const pending = status ? mode !== status.mode : false
       const selectedWorkspace = status?.knownWorkspaces?.find((ws) => ws.path === workspace)
       const selectedShared = selectedWorkspace
@@ -565,7 +575,7 @@ window.__ModuleLoader__.load({
               onClick: () => setMode(value),
             }, t(`mode.${value}`)))),
           h('button', { style: styles.button, disabled: Boolean(busy), onClick: applyMode }, t('applyMode')),
-          h('span', { style: styles.badge }, t('current.' + (status ? (status.hub.running && status.client.running ? 'both' : status.hub.running ? 'host' : status.client.running ? 'client' : status.mode === 'off' ? 'off' : 'stopped') : 'loading'))),
+          h('span', { style: styles.badge }, t('currentStatus', { state: currentLabel(status, t) })),
           pending ? h('span', { style: styles.pending }, t('pendingApply')) : null,
         ),
 
@@ -587,6 +597,7 @@ window.__ModuleLoader__.load({
               : status?.hub.enabled
                 ? t('host.configuredStopped')
                 : t('host.startHint')),
+          status?.hub.running ? h('p', { style: styles.hint }, t('host.selfSync')) : null,
           status?.hub?.pairingCode ? h('div', { style: styles.codeRow },
             h('span', { style: styles.label }, t('host.pairingCode')),
             h('code', { style: styles.code }, status.hub.pairingCode),
@@ -625,7 +636,7 @@ window.__ModuleLoader__.load({
 
         mode === 'off' ? h('p', { style: styles.hint }, t('off.hint')) : null,
 
-        showClient ? h('section', { style: styles.section },
+        showSync ? h('section', { style: styles.section },
           h('h3', { style: styles.heading }, t('workspace.heading')),
           field(t('workspace.path'), h('input', {
             value: workspace, placeholder: 'C:\\Users\\me\\project',
@@ -655,7 +666,7 @@ window.__ModuleLoader__.load({
             ))) : null,
         ) : null,
 
-        showClient ? h('section', { style: styles.section },
+        showSync ? h('section', { style: styles.section },
           h('h3', { style: styles.heading }, t('sync.heading')),
           h('div', { style: styles.buttonRow },
             h('button', { style: styles.button, disabled: Boolean(busy) || !status?.client?.running || !status?.workspace?.marked, onClick: syncNow }, t('sync.now'))),

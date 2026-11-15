@@ -23,13 +23,16 @@ directory:
 
 | Marker | Effect |
 |---|---|
-| `hub.json` | start the hub on its configured host and port |
-| `client.json` | sync this machine as a paired client |
-| both | run the hub and sync this machine too |
+| `hub.json` | start the hub and run the automatic host-self uploader |
+| `client.json` | sync this machine as a paired client when no hub is enabled |
 | neither | inert |
 
-`role: client`, `role: hub`, or `role: idle` overrides the markers. The hub can
-also run without DSH — see [deploy.md](deploy.md); the Windows flow is in
+`role: client`, `role: hub`, or `role: idle` overrides the markers. A Host
+creates `self-client.json` with a local device token and runs an in-process
+client, so its own sessions and workspace reach its hub without a pairing step.
+When both `hub.json` and `client.json` exist, Host wins; `client.json` stays for
+a later Client-mode switch. The hub can also run without DSH — see
+[deploy.md](deploy.md); the Windows flow is in
 [deploy-windows.md](deploy-windows.md), and [handoff.md](handoff.md) is a prompt
 for the server's DSH agent.
 
@@ -57,8 +60,8 @@ Server, once:
 /session-sync init-hub
 ```
 
-It writes `hub.json`, starts the hub immediately, and returns the pairing code.
-No terminal and no restart are needed.
+It writes `hub.json`, starts the hub, creates the host-self uploader, and returns
+the pairing code. No terminal and no restart are needed.
 
 Client, once after installing the bundle:
 
@@ -81,15 +84,16 @@ sync**. It controls the same markers the commands write:
 
 | Control | Effect |
 |---|---|
-| Mode (Host / Client / Both / Off) + Apply | writes `enabled` flags into `hub.json` / `client.json`; the other role's settings and token are preserved |
-| Host port + bind (Host/Both) | updates `hub.json` and starts/stops the hub; shows the pairing code |
-| Client target URL + code + name (Client/Both) | pairs against a hub, writes `client.json`, starts/stops the client |
-| Workspace path + current session (Client/Both) | writes `.dsh-sync.json` into the chosen folder; the list is built from saved DSH workspaces plus the configured default and current selection (not arbitrary session cwds), and marks each row 공유중(동기화중) or 공유하지 않음. **동기화 해제** removes only the marker; workspace files and hub checkpoints stay, and `.dsh-sync` is kept for an incremental re-mark. The unset default is `~\Documents\deepseek-harness\sync-default`, created empty on load |
-| Sync now (Client/Both) | pulls the hub's newest checkpoint, uploads existing sessions for the marked workspace, then pushes the local workspace |
+| Mode (Host / Client / Off) + Apply | Host writes `hub.json`; Client writes `client.json`; Off disables both. The other role's settings and token are preserved |
+| Host port + bind | updates `hub.json`, starts/stops the hub, shows the pairing code, and maintains the automatic host-self uploader |
+| Client target URL + code + name | pairs against a hub, writes `client.json`, starts/stops the external client |
+| Workspace path + current session (Host/Client) | writes `.dsh-sync.json` into the chosen folder; the list is built from saved DSH workspaces plus the configured default and current selection (not arbitrary session cwds), and marks each row 공유중(동기화중) or 공유하지 않음. **동기화 해제** removes only the marker; workspace files and hub checkpoints stay, and `.dsh-sync` is kept for an incremental re-mark. The unset default is `~\Documents\deepseek-harness\sync-default`, created empty on load |
+| Sync now (Host/Client) | pulls the hub's newest checkpoint, uploads existing sessions for the marked workspace, then pushes the local workspace |
 
 The mode selection is a draft; **Apply** commits it, and the current running
 state is shown beside the selector so a toggle never starts or stops the hub on
-its own.
+its own. Host mode starts the hub and its automatic self-uploader together; the
+status line reads `Host running (self-sync)` while both are active.
 
 The page calls exact Host routes under `/session-sync/api/...`
 (`status`, `mode`, `pair`, `unpair`, `workspace`, `sync`, `code`). Connection

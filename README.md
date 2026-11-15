@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.5.2` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.6.0` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -60,15 +60,16 @@ After reloading DSH, open **Settings → Session sync**:
 - **Language** — **Auto** follows the DSH interface language
   (`<html lang>`); English, 中文, and 한국어 can be selected explicitly. The
   choice is stored per browser and never defaults to Korean.
-- **Mode** — choose Host, Client, Both, or Off. The choice is a draft; the
+- **Mode** — choose Host, Client, or Off. The choice is a draft; the
   **Apply** button commits it. The current running state is shown beside it, so
-  a toggle never starts or stops the hub on its own.
-- **Host settings** (Host/Both) — port, concrete bind address, and the pairing
-  code with copy/rotate.
-- **Client settings** (Client/Both) — target URL in one line, fill it from the
-  local host settings, enter the pairing code and device name, then pair or
-  unpair.
-- **Workspace** (Client/Both) — type a path or fill it from the current session,
+  a toggle never starts or stops the hub on its own. **Host** also uploads this
+  machine's own sessions and workspace to its hub; a separate Both mode is not
+  needed.
+- **Host settings** — port, concrete bind address, and the pairing code with
+  copy/rotate. The host's own sync source is automatic.
+- **Client settings** — target URL in one line, fill it from the local host
+  settings, enter the pairing code and device name, then pair or unpair.
+- **Workspace** (Host/Client) — type a path or fill it from the current session,
   then mark the folder (`.dsh-sync.json`). Known workspaces are listed with a
   **공유중(동기화중)** or **공유하지 않음** badge. The list is built from saved
   DSH workspaces plus the configured default and current selection, not from
@@ -78,7 +79,7 @@ After reloading DSH, open **Settings → Session sync**:
   path defaults to `~\Documents\deepseek-harness\sync-default`, which the plugin
   creates as an empty folder; override it with `defaultWorkspace` in the bundle
   config.
-- **Sync now** (Client/Both) — pull the hub's newest checkpoint, upload the
+- **Sync now** (Host/Client) — pull the hub's newest checkpoint, upload the
   existing sessions whose working directory is the marked workspace, then push
   the workspace's current state, with a result summary.
 
@@ -158,10 +159,14 @@ supported release range (`>=0.2.2-rc.3 <0.3.0`).
 
 | Marker | Effect |
 |---|---|
-| `hub.json` | start the hub on its configured host and port |
-| `client.json` | sync this machine as a paired client |
-| both | run the hub and sync this machine too |
+| `hub.json` | start the hub and run the automatic host-self uploader |
+| `client.json` | sync this machine as a paired client when no hub is enabled |
 | neither | inert |
+
+A Host writes `self-client.json` with a local device token automatically; that
+is internal state, not a marker the operator edits. If both `hub.json` and
+`client.json` exist, Host wins and `client.json` is kept for a later Client-mode
+switch.
 
 Explicit `role: client`, `role: hub`, or `role: idle` overrides the markers.
 `hubUrl`/`token` still work for a manual configuration, but pairing is the

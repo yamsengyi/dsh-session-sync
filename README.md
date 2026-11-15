@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.3.1` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.3.2` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -63,8 +63,8 @@ After reloading DSH, open **Settings → Session sync**:
   settings, enter the pairing code and device name, then pair or unpair.
 - **Workspace** — type a path or fill it from the current session, then mark the
   folder (`.dsh-sync.json`).
-- **Sync now** — push a checkpoint and pull the hub's newest one, with a result
-  summary.
+- **Sync now** — pull the hub's newest checkpoint, then push the workspace's
+  current state, with a result summary.
 
 The page is a browser client that calls exact Host routes under
 `/session-sync/api/...`. Connection authenticates every request as the browser

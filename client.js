@@ -224,10 +224,10 @@ window.__ModuleLoader__.load({
         h('section', { style: styles.section },
           h('h3', { style: styles.heading }, '4. 동기화'),
           h('div', { style: styles.row },
-            h('button', { style: styles.button, disabled: Boolean(busy) || !status?.client?.running, onClick: syncNow }, '지금 동기화 (Push + Pull)')),
+            h('button', { style: styles.button, disabled: Boolean(busy) || !status?.client?.running, onClick: syncNow }, '지금 동기화 (Pull + Push)')),
           last
             ? h('p', { style: styles.muted },
-              `마지막: ${new Date(last.at).toLocaleString()} · push v${last.pushed?.version ?? '-'}${last.pushed?.skipped ? ' (변경 없음)' : ''} · pull v${last.pulled?.version ?? '-'} · 충돌 ${last.pulled?.conflicts?.length ?? 0}`)
+              `마지막: ${new Date(last.at).toLocaleString()} · pull v${last.pulled?.version ?? '-'} · push v${last.pushed?.version ?? '-'}${last.pushed?.skipped ? ' (변경 없음)' : ''} · 충돌 ${last.pulled?.conflicts?.length ?? 0}`)
             : h('p', { style: styles.muted }, '아직 수동 동기화 기록이 없습니다.'),
         ),
 

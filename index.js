@@ -678,12 +678,12 @@ export async function apply(ctx, raw) {
       marker = undefined
     }
     if (!marker) throw new SyncHttpError(409, 'no-marker', 'workspace is not marked for sync')
+    const pulled = await runtime.client.pullCheckpoint(marker.folderId, target)
     const pushed = await runtime.client.pushCheckpoint(marker.folderId, target, {
       message: 'manual sync',
       author: runtime.deviceName,
     })
-    const pulled = await runtime.client.pullCheckpoint(marker.folderId, target)
-    await updateUi({ lastSync: { at: Date.now(), pushed, pulled } })
+    await updateUi({ lastSync: { at: Date.now(), pulled, pushed } })
     return { ...(await readStatus()), pushed, pulled }
   }
 

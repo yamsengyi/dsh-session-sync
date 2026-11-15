@@ -84,7 +84,7 @@ sync**. It controls the same markers the commands write:
 | Host mode + port + bind | writes `hub.json`, starts/stops the hub, shows the pairing code |
 | Client target URL + code + name | pairs against a hub, writes `client.json`, starts/stops the client |
 | Workspace path + current session | writes `.dsh-sync.json` into the chosen folder |
-| Sync now | pushes a checkpoint and pulls the hub's newest one |
+| Sync now | pulls the hub's newest checkpoint, then pushes the local workspace |
 
 The page calls exact Host routes under `/session-sync/api/...`
 (`status`, `host`, `pair`, `unpair`, `workspace`, `sync`, `code`). Connection

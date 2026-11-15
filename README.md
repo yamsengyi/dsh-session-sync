@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.7.2` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.7.3` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -77,8 +77,11 @@ After reloading DSH, open **Settings → Session sync**:
   marker without deleting workspace files or hub checkpoints; the `.dsh-sync`
   state is kept so re-marking can resume from the old base. With no saved
   selection the path defaults to
-  `~\Documents\deepseek-harness\sync-default`, which the plugin creates as an
-  empty folder; override it with `defaultWorkspace` in the bundle config.
+  `~\Documents\deepseek-harness\sync-default`, which the plugin creates,
+  registers as a DSH Workspace, and **marks as shared by default**. Every other
+  workspace is local until explicitly marked; **unsharing `sync-default`
+  persists** and is not overridden on the next load. Override the path with
+  `defaultWorkspace` in the bundle config.
 - **Sync now** (Host/Client) — pull the hub's newest checkpoint, upload the
   existing sessions whose working directory is the marked workspace, then push
   the workspace's current state, with a result summary.
@@ -118,7 +121,10 @@ DSH creates its own first-use workspace at
 `<Documents>\deepseek-harness\default-workspace`; this plugin never creates or
 moves that folder. It does create and **register** its own
 `~\Documents\deepseek-harness\sync-default` as a DSH Workspace on load, so it
-appears in the left Workspaces list without a manual "Add workspace".
+appears in the left Workspaces list without a manual "Add workspace". Only that
+folder is marked shared by default; `default-workspace` and other projects
+remain local until explicitly marked. Session auto-push is also gated by the
+workspace marker, so an unmarked project's session history is not uploaded.
 
 To change where DSH creates **future** default workspaces, override the
 workspace controller in the profile patch:

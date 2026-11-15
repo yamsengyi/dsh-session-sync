@@ -99,6 +99,11 @@ function slugify(value) {
   return slug || 'workspace'
 }
 
+function samePath(left, right) {
+  const normalize = (value) => String(value ?? '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
+  return normalize(left) === normalize(right)
+}
+
 async function readJsonIfExists(path) {
   try {
     return JSON.parse(await readFile(path, 'utf8'))
@@ -171,6 +176,15 @@ export async function apply(ctx, raw) {
   // without the operator manually adding the directory.
   void (async () => {
     await mkdir(config.defaultWorkspace, { recursive: true })
+    // Only sync-default is shared by default. An explicit unshare persists
+    // through ui.json so the next load does not silently re-enable it.
+    const ui = await readJsonIfExists(uiStatePath)
+    const optedOut = ui?.defaultWorkspaceUnshared === true
+      && samePath(ui.defaultWorkspaceUnsharedPath, config.defaultWorkspace)
+    if (!optedOut) {
+      const marker = await readMarker(config.defaultWorkspace)
+      if (!marker) await initFolder(config.defaultWorkspace)
+    }
     const registry = ctx.workspaceRegistry
     if (!registry) return
     const existing = await registry.resolveByPath(config.defaultWorkspace)
@@ -178,7 +192,7 @@ export async function apply(ctx, raw) {
     await registry.create(config.defaultWorkspace)
     logger.info?.(`[session-sync] registered workspace ${config.defaultWorkspace}`)
   })().catch((error) => {
-    logger.warn?.(`[session-sync] cannot register default workspace ${config.defaultWorkspace}: ${describe(error)}`)
+    logger.warn?.(`[session-sync] cannot prepare default workspace ${config.defaultWorkspace}: ${describe(error)}`)
   })
 
   const readUi = async () => (await readJsonIfExists(uiStatePath)) ?? {}
@@ -264,6 +278,21 @@ export async function apply(ctx, raw) {
     if (!client) return
     const buffer = runtime.buffers.get(session.id)
     if (!buffer || buffer.events.length === 0) return
+    // Only explicitly marked workspaces upload session history. A session
+    // without cwd is a test/legacy shape and remains allowed.
+    const cwd = session.header?.cwd
+    if (typeof cwd === 'string' && cwd.length > 0) {
+      let marker
+      try {
+        marker = await readMarker(cwd)
+      } catch {
+        marker = undefined
+      }
+      if (!marker) {
+        runtime.buffers.delete(session.id)
+        return
+      }
+    }
     if (runtime.pushing.has(session.id)) {
       runtime.dirty.add(session.id)
       return
@@ -872,7 +901,12 @@ export async function apply(ctx, raw) {
     }
     if (!info.isDirectory()) throw new SyncHttpError(400, 'invalid-path', 'workspace path is not a directory')
     const folderId = await initFolder(target)
-    await updateUi({ workspacePath: target })
+    const patch = { workspacePath: target }
+    if (samePath(target, config.defaultWorkspace)) {
+      patch.defaultWorkspaceUnshared = false
+      patch.defaultWorkspaceUnsharedPath = null
+    }
+    await updateUi(patch)
     return { ...(await readStatus()), folderId }
   }
 
@@ -888,6 +922,9 @@ export async function apply(ctx, raw) {
       throw new SyncHttpError(404, 'not-marked', 'workspace is not marked for sync')
     }
     await rm(markerPath, { force: true })
+    if (samePath(target, config.defaultWorkspace)) {
+      await updateUi({ defaultWorkspaceUnshared: true, defaultWorkspaceUnsharedPath: target })
+    }
     return readStatus()
   }
 
@@ -919,6 +956,13 @@ export async function apply(ctx, raw) {
 
   const pushWorkspaceSessions = async (client, workspacePath) => {
     if (!workspacePath) return { scanned: 0, pushed: 0, events: 0, errors: 0 }
+    let rootMarker
+    try {
+      rootMarker = await readMarker(workspacePath)
+    } catch {
+      rootMarker = undefined
+    }
+    if (!rootMarker) return { scanned: 0, pushed: 0, events: 0, errors: 0 }
     const normalizePath = (value) => String(value ?? '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
     let sessions
     try {

@@ -133,9 +133,12 @@ account's Documents folder is redirected.
 The first-use workspace at `<Documents>\deepseek-harness\default-workspace` is
 created by DSH's workspace controller, not by this plugin. The plugin's own
 `defaultWorkspace` (`~\Documents\deepseek-harness\sync-default`) is created empty
-on load and registered through `ctx.workspaceRegistry.create(...)` when it is not
-already a DSH Workspace, so it appears in the left Workspaces list without a
-manual add.
+on load, registered through `ctx.workspaceRegistry.create(...)` when it is not
+already a DSH Workspace, and **marked shared by default**. An explicit unshare
+records `defaultWorkspaceUnshared` in `ui.json`, so later loads do not re-mark
+it. No other workspace is marked automatically. Session auto-push reads the
+workspace marker at the session's `cwd`; an unmarked workspace's history is
+buffered only until the turn ends and is then dropped without a network call.
 
 A deployment can change where DSH creates **future** default workspaces through
 the controller's `documentsDirectory` config (a fully qualified Host path). The

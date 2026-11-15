@@ -101,6 +101,16 @@ window.__ModuleLoader__.load({
         'action.checkUpdate': 'Check for updates',
         'action.done': '{label} done',
         'update.none': 'Not checked yet',
+        'update.rowTitle': 'Session sync update',
+        'update.check': 'Check for updates',
+        'update.run': 'Update',
+        'update.installed': 'Installed {current} · latest {latest}',
+        'update.confirm': 'Updating restarts the hub. Continue?',
+        'update.confirmYes': 'Update now',
+        'update.cancel': 'Cancel',
+        'update.started': 'Update started. Refresh or restart DSH.',
+        'update.failed': 'Update failed',
+        'update.upToDate': 'Up to date',
         'update.available': 'Latest {latest} · update available',
         'update.current': 'Latest {latest} · up to date',
         'update.error': 'Check failed: {message}',
@@ -197,6 +207,16 @@ window.__ModuleLoader__.load({
         'action.checkUpdate': '检查更新',
         'action.done': '{label}完成',
         'update.none': '尚未检查更新',
+        'update.rowTitle': '会话同步更新',
+        'update.check': '检查更新',
+        'update.run': '执行更新',
+        'update.installed': '已安装 {current} · 最新 {latest}',
+        'update.confirm': '更新会重启中枢。继续吗？',
+        'update.confirmYes': '立即更新',
+        'update.cancel': '取消',
+        'update.started': '更新已开始。请刷新或重启 DSH。',
+        'update.failed': '更新失败',
+        'update.upToDate': '已是最新',
         'update.available': '最新 {latest} · 可更新',
         'update.current': '最新 {latest} · 已是最新',
         'update.error': '检查失败：{message}',
@@ -293,6 +313,16 @@ window.__ModuleLoader__.load({
         'action.checkUpdate': '업데이트 확인',
         'action.done': '{label} 완료',
         'update.none': '업데이트 확인 전',
+        'update.rowTitle': '세션 동기화 업데이트',
+        'update.check': '업데이트 확인',
+        'update.run': '업데이트 실행',
+        'update.installed': '설치 {current} · 최신 {latest}',
+        'update.confirm': '업데이트하면 Hub가 재시작됩니다. 계속할까요?',
+        'update.confirmYes': '지금 업데이트',
+        'update.cancel': '취소',
+        'update.started': '업데이트가 시작되었습니다. 새로고침하거나 DSH를 재시작하세요.',
+        'update.failed': '업데이트 실패',
+        'update.upToDate': '최신 버전',
         'update.available': '최신 {latest} · 업데이트 가능',
         'update.current': '최신 {latest} · 최신 버전',
         'update.error': '확인 실패: {message}',
@@ -513,6 +543,103 @@ window.__ModuleLoader__.load({
         readLanguage() === 'auto' ? detectLanguage() : readLanguage(),
         shared ? 'badge.shared' : 'badge.local',
       ))
+    }
+
+    const updateStyles = {
+      wrap: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 12 },
+      title: { fontWeight: 600 },
+      hint: { opacity: 0.7 },
+      warning: { color: '#d08a2e' },
+      button: {
+        padding: '4px 9px', borderRadius: 6, border: '1px solid rgba(127,127,127,0.4)',
+        background: 'transparent', color: 'inherit', cursor: 'pointer', font: 'inherit', fontSize: 12,
+      },
+      primary: {
+        padding: '4px 9px', borderRadius: 6, border: '1px solid rgba(60,154,95,0.55)',
+        background: 'rgba(60,154,95,0.18)', color: 'inherit', cursor: 'pointer', font: 'inherit', fontSize: 12,
+      },
+    }
+
+    /** Manual update control shared by the plugin detail and Settings General. */
+    function UpdateControl({ variant = 'row' }) {
+      const [update, setUpdate] = useState(null)
+      const [busy, setBusy] = useState(false)
+      const [confirming, setConfirming] = useState(false)
+      const [message, setMessage] = useState('')
+      const [error, setError] = useState('')
+      const lang = readLanguage() === 'auto' ? detectLanguage() : readLanguage()
+      const tr = (key, params) => translate(lang, key, params)
+
+      const check = async (force) => {
+        setBusy(true)
+        setError('')
+        try {
+          setUpdate(await call('update', { force: Boolean(force) }))
+        } catch (reason) {
+          setError(String(reason?.message ?? reason))
+        } finally {
+          setBusy(false)
+        }
+      }
+
+      useEffect(() => {
+        void check(false)
+      }, [])
+
+      const install = async () => {
+        setBusy(true)
+        setError('')
+        setMessage('')
+        try {
+          const result = await call('update/install', {})
+          setMessage(result.started ? tr('update.started') : tr('update.upToDate'))
+          setConfirming(false)
+        } catch (reason) {
+          setError(String(reason?.message ?? reason))
+        } finally {
+          setBusy(false)
+        }
+      }
+
+      const installed = update
+        ? tr('update.installed', {
+          current: `v${update.current ?? '?'}`,
+          latest: update.latest ?? '?',
+        })
+        : ''
+      const controls = h(React.Fragment, null,
+        confirming ? h(React.Fragment, null,
+          h('span', { style: updateStyles.warning }, tr('update.confirm')),
+          h('button', { type: 'button', style: updateStyles.primary, disabled: busy, onClick: install }, tr('update.confirmYes')),
+          h('button', { type: 'button', style: updateStyles.button, disabled: busy, onClick: () => setConfirming(false) }, tr('update.cancel')))
+          : null,
+        !confirming && update?.updateAvailable
+          ? h('button', { type: 'button', style: updateStyles.primary, disabled: busy, onClick: () => setConfirming(true) }, tr('update.run'))
+          : null,
+        !confirming && !update?.updateAvailable
+          ? h('button', { type: 'button', style: updateStyles.button, disabled: busy, onClick: () => check(true) }, tr('update.check'))
+          : null)
+
+      if (variant === 'actions') {
+        return h('span', { style: updateStyles.wrap },
+          controls,
+          update?.updateAvailable ? h('span', { style: updateStyles.hint }, `v${update.latest}`) : null,
+          message ? h('span', { style: updateStyles.hint }, message) : null,
+          error ? h('span', { style: updateStyles.warning }, `${tr('update.failed')}: ${error}`) : null)
+      }
+
+      return h('div', { style: { ...updateStyles.wrap, justifyContent: 'space-between', width: '100%' } },
+        h('div', { style: { display: 'flex', flexDirection: 'column', gap: 2 } },
+          h('span', { style: updateStyles.title }, tr('update.rowTitle')),
+          h('span', { style: updateStyles.hint }, installed || tr('update.none')),
+          message ? h('span', { style: updateStyles.hint }, message) : null,
+          error ? h('span', { style: updateStyles.warning }, `${tr('update.failed')}: ${error}`) : null),
+        h('div', { style: updateStyles.wrap }, controls))
+    }
+
+    function PluginDetailUpdate({ subject }) {
+      if (subject?.kind !== 'bundle' || subject.pkg?.name !== '@yamsengyi/dsh-session-sync') return null
+      return h(UpdateControl, { variant: 'actions' })
     }
 
     const projectStyles = {
@@ -1080,6 +1207,16 @@ window.__ModuleLoader__.load({
           name: 'sidebar.session.action',
           id: 'session-sync-projects',
         }, ProjectsEntry))
+        ctx.slots.inject('plugins.detail.actions', () => ctx.slots.register({
+          name: 'plugins.detail.actions',
+          id: 'session-sync-update',
+          order: 50,
+        }, PluginDetailUpdate))
+        ctx.slots.inject('settings.general.item', () => ctx.slots.register({
+          name: 'settings.general.item',
+          id: 'session-sync-update',
+          order: 110,
+        }, () => h(UpdateControl, { variant: 'row' })))
       },
     }
   },

@@ -170,6 +170,14 @@ the highest stable tag with its own version and reports `updateAvailable`; a
 network failure is reported as text and never blocks settings. Each installed
 profile checks independently, so every PC can see whether its bundle is behind.
 
+A manual update control is also registered in `plugins.detail.actions` (the
+bundle's Plugin Manager detail page) and `settings.general.item` (Settings →
+General). **업데이트 실행** posts `/session-sync/api/update/install`; the Host
+detaches `ctx.pluginManager.installBundle(GITHUB_URL)` so the response can
+flush, then the Plugin Manager replaces the bundle. Because this replaces the
+running plugin, the hub stops briefly and a page refresh or DSH restart may be
+needed. The route returns `started`; there is no automatic installation.
+
 ## UI language
 
 The section reads the DSH document language (`<html lang>`, which the client

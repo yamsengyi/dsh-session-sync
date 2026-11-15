@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.9.0` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.9.1` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -159,6 +159,11 @@ location instead of moving the recorded one.
 - **Update check** — the settings footer compares the installed version with
   the latest GitHub tag and offers a manual check. Each installed profile checks
   independently; the result is cached for an hour.
+- **Manual update seats** — the same small update control is registered in
+  **Plugins → @yamsengyi/dsh-session-sync → detail actions** and
+  **Settings → General → Session sync update**. Update execution calls the DSH
+  Plugin Manager, so the hub restarts and a page refresh or DSH restart may be
+  required. It is a manual, confirmed click; there is no automatic install.
 
 ## Layout
 

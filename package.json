@@ -1,6 +1,6 @@
 {
   "name": "@yamsengyi/dsh-session-sync",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "private": true,
   "type": "module",
   "description": "Personal sync hub for DSH sessions and workspace snapshots",
@@ -52,8 +52,10 @@
       "immediately": true,
       "inject": [
         "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-settings-general",
         "@deepseek-ai/dsh-client-ui-workspace",
-        "@deepseek-ai/dsh-client-ui-sidebar"
+        "@deepseek-ai/dsh-client-ui-sidebar",
+        "@deepseek-ai/dsh-client-ui-plugin-manager"
       ]
     }
   }

@@ -24,11 +24,12 @@ import { createSessionSyncRoutes } from './src/ui-api.js'
 
 const require = createRequire(import.meta.url)
 const PLUGIN_VERSION = require('./package.json').version
+const GITHUB_URL = 'https://github.com/yamsengyi/dsh-session-sync'
 
 export const name = 'session-sync'
 
 /** Persistence for backfill, commands for setup, and the Web carrier for the settings page API. */
-export const inject = ['sessionPersistence', 'commands', 'webServer', 'connection', 'workspaceRegistry']
+export const inject = ['sessionPersistence', 'commands', 'webServer', 'connection', 'workspaceRegistry', 'pluginManager']
 
 const MAX_BUFFER_EVENTS = 2000
 const PUSH_DEBOUNCE_MS = 300
@@ -1165,6 +1166,22 @@ export async function apply(ctx, raw) {
     return { ...(await readStatus()), pulled }
   }
 
+  const installUpdate = async () => {
+    const checked = await checkUpdate({ force: true })
+    if (!checked.updateAvailable) return { ...checked, started: false }
+    if (!ctx.pluginManager?.installBundle) {
+      throw new SyncHttpError(503, 'plugin-manager-unavailable', 'plugin manager is unavailable')
+    }
+    // Detach so this HTTP response can flush before the plugin manager replaces
+    // the running bundle. The hub and this route go down during the update.
+    setTimeout(() => {
+      void ctx.pluginManager.installBundle(GITHUB_URL)
+        .then((result) => logger.info?.(`[session-sync] update install: ${JSON.stringify(result)}`))
+        .catch((error) => logger.warn?.(`[session-sync] update install failed: ${describe(error)}`))
+    }, 500)
+    return { ...checked, started: true }
+  }
+
   const checkUpdate = async (body) => {
     const force = body?.force === true
     let cached
@@ -1219,6 +1236,7 @@ export async function apply(ctx, raw) {
         syncNow,
         code: issueCode,
         checkUpdate,
+        installUpdate,
       },
       logger,
     })

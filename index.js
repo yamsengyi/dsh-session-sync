@@ -166,9 +166,19 @@ export async function apply(ctx, raw) {
   const updateStatePath = join(dataDir, 'update-check.json')
 
   // The explicit default is an empty, dedicated folder. Creating it is a no-op
-  // when it already exists; it never writes into an existing folder.
-  void mkdir(config.defaultWorkspace, { recursive: true }).catch((error) => {
-    logger.warn?.(`[session-sync] cannot create default workspace ${config.defaultWorkspace}: ${describe(error)}`)
+  // when it already exists; it never writes into an existing folder. It is also
+  // registered as a DSH Workspace so it appears in the left Workspaces list
+  // without the operator manually adding the directory.
+  void (async () => {
+    await mkdir(config.defaultWorkspace, { recursive: true })
+    const registry = ctx.workspaceRegistry
+    if (!registry) return
+    const existing = await registry.resolveByPath(config.defaultWorkspace)
+    if (existing) return
+    await registry.create(config.defaultWorkspace)
+    logger.info?.(`[session-sync] registered workspace ${config.defaultWorkspace}`)
+  })().catch((error) => {
+    logger.warn?.(`[session-sync] cannot register default workspace ${config.defaultWorkspace}: ${describe(error)}`)
   })
 
   const readUi = async () => (await readJsonIfExists(uiStatePath)) ?? {}

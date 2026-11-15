@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.7.1` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.7.2` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -115,8 +115,9 @@ safest first-sync target.
 
 DSH creates its own first-use workspace at
 `<Documents>\deepseek-harness\default-workspace`; this plugin never creates or
-moves that folder. The Settings page starts with an **empty** workspace path, so
-choose a real project or press **Use current** yourself.
+moves that folder. It does create and **register** its own
+`~\Documents\deepseek-harness\sync-default` as a DSH Workspace on load, so it
+appears in the left Workspaces list without a manual "Add workspace".
 
 To change where DSH creates **future** default workspaces, override the
 workspace controller in the profile patch:

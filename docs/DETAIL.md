@@ -131,9 +131,11 @@ account's Documents folder is redirected.
 ## Default workspace vs shared workspace
 
 The first-use workspace at `<Documents>\deepseek-harness\default-workspace` is
-created by DSH's workspace controller, not by this plugin. The Settings page
-starts with an empty path and only fills it when the operator chooses a folder
-or presses **Use current**.
+created by DSH's workspace controller, not by this plugin. The plugin's own
+`defaultWorkspace` (`~\Documents\deepseek-harness\sync-default`) is created empty
+on load and registered through `ctx.workspaceRegistry.create(...)` when it is not
+already a DSH Workspace, so it appears in the left Workspaces list without a
+manual add.
 
 A deployment can change where DSH creates **future** default workspaces through
 the controller's `documentsDirectory` config (a fully qualified Host path). The

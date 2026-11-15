@@ -16,32 +16,24 @@ The server must have DSH running for the hub to be reachable.
 1. Install the bundle: **Plugins → Add plugin**, paste
    `https://github.com/yamsengyi/dsh-session-sync`, and leave the Registry dropdown at
    its default (a GitHub URL bypasses the npm registry).
-2. Reload DSH once so the plugin code and the `/session-sync` command load.
-3. In DSH, run:
+2. Reload DSH once so the plugin code, the client section, and the
+   `/session-sync` command load.
+3. Open **Settings → Session sync → Host mode**:
+   - enable the host,
+   - set port `8787`,
+   - choose bind `127.0.0.1` (proxy/tunnel) or `0.0.0.0` (direct LAN),
+   - press **Apply**. The pairing code appears in the page and in
+     `%USERPROFILE%\.dsh\dsh-sync\hub\pairing-code.txt`.
+4. On later DSH starts the plugin reads `hub.json` and starts the hub
+   automatically.
 
-```text
-/session-sync init-hub
-```
-
-The command writes `%USERPROFILE%\.dsh\dsh-sync\hub.json`, starts the hub
-immediately, and returns the pairing code (also stored in
-`%USERPROFILE%\.dsh\dsh-sync\hub\pairing-code.txt`). No terminal and no restart
-are needed.
-
-- Default bind is `127.0.0.1:8787`, which is right behind a tunnel or Caddy.
-- For direct LAN access without a proxy, use `/session-sync init-hub 0.0.0.0 8787` and
-  allow TCP 8787 on the Private profile.
-
-CLI fallback for automation, using the installed package:
+CLI fallback for automation:
 
 ```powershell
 node "$env:DSH_PROFILE_DIR\node_modules\@yamsengyi\dsh-session-sync\bin\session-sync.mjs" init-hub
 ```
 
-On later DSH starts the plugin reads `hub.json` and starts the hub
-automatically.
-
-4. Verify locally:
+5. Verify locally:
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8787/v1/health
@@ -51,16 +43,14 @@ Get-NetTCPConnection -LocalPort 8787 | Select-Object LocalAddress,State
 ## 2. Client setup
 
 1. Install the same GitHub URL on the client and reload DSH once.
-2. In DSH, pair once:
-
-```text
-/session-sync pair https://sync.example.com XXXX-XXXX laptop
-```
-
-`pair` exchanges the code for a device token, writes
-`%USERPROFILE%\.dsh\dsh-sync\client.json`, and starts syncing immediately. No
-profile patch and no manual token copy are involved. On later DSH starts the
-plugin reads `client.json` and resumes.
+2. Open **Settings → Session sync → Client mode**:
+   - enter the target URL in one line, for example
+     `https://sync.example.com` or `http://11.11.1.77:8787`,
+   - use **Use host info** when the host is this machine to fill the URL and
+     pairing code,
+   - enter the pairing code and a device name, then press **Pair**.
+3. The client writes `client.json` and starts syncing immediately. On later
+   DSH starts it resumes automatically.
 
 CLI fallback:
 
@@ -71,7 +61,7 @@ node "$env:DSH_PROFILE_DIR\node_modules\@yamsengyi\dsh-session-sync\bin\session-
   --name laptop
 ```
 
-Check either side with `/session-sync status` or:
+Check either side with **Settings → Session sync** or `/session-sync status`, or:
 
 ```powershell
 node "$env:DSH_PROFILE_DIR\node_modules\@yamsengyi\dsh-session-sync\bin\session-sync.mjs" status
@@ -129,11 +119,8 @@ the certificate automatically.
 
 ### LAN only
 
-In DSH:
-
-```text
-/session-sync init-hub 0.0.0.0 8787
-```
+In **Settings → Session sync → Host mode**, choose bind `0.0.0.0`, set the port,
+and press **Apply** (or run `/session-sync init-hub 0.0.0.0 8787`).
 
 In an elevated PowerShell:
 
@@ -143,8 +130,9 @@ New-NetFirewallRule -DisplayName "DSH sync hub" -Direction Inbound `
   -Protocol TCP -LocalPort 8787 -Action Allow -Profile Private
 ```
 
-Clients pair with `/session-sync pair http://<server-lan-ip>:8787 <code> <name>`. This
-leg is plain HTTP; use it only on a trusted network.
+Clients enter `http://<server-lan-ip>:8787` and the pairing code in
+**Settings → Session sync → Client mode**. This leg is plain HTTP; use it only
+on a trusted network.
 
 ## 4. Backup and restore
 

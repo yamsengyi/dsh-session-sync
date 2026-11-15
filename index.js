@@ -13,16 +13,17 @@
 
 import { hostname, homedir } from 'node:os'
 import { watch } from 'node:fs'
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { basename, join } from 'node:path'
 import { createHubServer } from './src/hub-server.js'
 import { SyncClient } from './src/sync-client.js'
 import { SyncHttpError, sha256Hex } from './src/protocol.js'
+import { createSessionSyncRoutes } from './src/ui-api.js'
 
 export const name = 'session-sync'
 
-/** Session persistence supplies the backfill read; commands host the one-time setup. */
-export const inject = ['sessionPersistence', 'commands']
+/** Persistence for backfill, commands for setup, and the Web carrier for the settings page API. */
+export const inject = ['sessionPersistence', 'commands', 'webServer', 'connection']
 
 const MAX_BUFFER_EVENTS = 2000
 const PUSH_DEBOUNCE_MS = 300
@@ -153,6 +154,14 @@ export async function apply(ctx, raw) {
   const dataDir = config.dataDir || defaultDataDir()
   const hubConfigPath = join(dataDir, 'hub.json')
   const clientConfigPath = join(dataDir, 'client.json')
+  const uiStatePath = join(dataDir, 'ui.json')
+
+  const readUi = async () => (await readJsonIfExists(uiStatePath)) ?? {}
+  const updateUi = async (patch) => {
+    const current = await readUi()
+    await mkdir(dataDir, { recursive: true })
+    await writeJsonAtomic(uiStatePath, { ...current, ...patch })
+  }
 
   if (config.role === 'idle') {
     logger.info?.('[session-sync] role idle; nothing to do')
@@ -535,6 +544,171 @@ export async function apply(ctx, raw) {
       },
     })
     ctx.effect(() => () => dispose())
+  }
+
+  const currentPath = async () => {
+    try {
+      const sessions = await ctx.sessionPersistence.list()
+      const withCwd = sessions.filter((entry) => typeof entry.header?.cwd === 'string' && entry.header.cwd.length > 0)
+      withCwd.sort((a, b) => (b.header.createdAt ?? 0) - (a.header.createdAt ?? 0))
+      return withCwd[0]?.header.cwd ?? null
+    } catch {
+      return null
+    }
+  }
+
+  const readStatus = async () => {
+    const hubConfig = await readJsonIfExists(hubConfigPath)
+    const clientConfig = await readJsonIfExists(clientConfigPath)
+    const ui = await readUi()
+    let marker
+    if (ui.workspacePath) {
+      try {
+        marker = await readMarker(ui.workspacePath)
+      } catch {
+        marker = undefined
+      }
+    }
+    const runningHub = runtime.hub
+    return {
+      role: config.role,
+      hub: {
+        configured: Boolean(hubConfig),
+        running: Boolean(runningHub),
+        host: runningHub?.host ?? hubConfig?.host ?? config.hubHost,
+        port: runningHub?.port ?? hubConfig?.port ?? config.hubPort,
+        url: runningHub?.url ?? null,
+        pairingCode: runningHub?.pairingCode() ?? null,
+      },
+      client: {
+        paired: Boolean(clientConfig),
+        running: Boolean(runtime.client),
+        hubUrl: clientConfig?.hubUrl ?? null,
+        deviceName: clientConfig?.deviceName ?? null,
+      },
+      workspace: {
+        path: ui.workspacePath ?? null,
+        folderId: marker?.folderId ?? null,
+        marked: Boolean(marker),
+      },
+      currentPath: await currentPath(),
+      lastSync: ui.lastSync ?? null,
+    }
+  }
+
+  const setHost = async (body) => {
+    const enabled = body?.enabled !== false
+    if (!enabled) {
+      await rm(hubConfigPath, { force: true })
+      await resolveRoles()
+      return readStatus()
+    }
+    const port = Number(body?.port ?? config.hubPort)
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+      throw new SyncHttpError(400, 'invalid-port', 'port must be 1..65535')
+    }
+    const bind = String(body?.bind ?? config.hubHost)
+    const existing = await readJsonIfExists(hubConfigPath)
+    await mkdir(dataDir, { recursive: true })
+    await writeJsonAtomic(hubConfigPath, {
+      enabled: true,
+      host: bind,
+      port,
+      createdAt: existing?.createdAt ?? new Date().toISOString(),
+    })
+    await resolveRoles()
+    return readStatus()
+  }
+
+  const pairClient = async (body) => {
+    const hubUrl = String(body?.hubUrl ?? '').trim().replace(/\/+$/, '')
+    const code = String(body?.code ?? '').trim()
+    const name = String(body?.name ?? '').trim() || config.deviceName
+    if (!hubUrl || !code) throw new SyncHttpError(400, 'invalid-pair', 'hubUrl and code are required')
+    const response = await fetch(`${hubUrl}/v1/pair`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ code, name }),
+    })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      throw new SyncHttpError(response.status, 'pair-failed', payload?.error?.message ?? 'pairing failed')
+    }
+    await mkdir(dataDir, { recursive: true })
+    await writeJsonAtomic(clientConfigPath, {
+      hubUrl,
+      token: payload.token,
+      deviceName: payload.device ?? name,
+      pairedAt: new Date().toISOString(),
+    })
+    await resolveRoles()
+    return readStatus()
+  }
+
+  const unpairClient = async () => {
+    await rm(clientConfigPath, { force: true })
+    await resolveRoles()
+    return readStatus()
+  }
+
+  const markWorkspace = async (body) => {
+    const target = String(body?.path ?? '').trim()
+    if (!target) throw new SyncHttpError(400, 'invalid-path', 'workspace path is required')
+    let info
+    try {
+      info = await stat(target)
+    } catch {
+      throw new SyncHttpError(400, 'invalid-path', 'workspace path does not exist')
+    }
+    if (!info.isDirectory()) throw new SyncHttpError(400, 'invalid-path', 'workspace path is not a directory')
+    const folderId = await initFolder(target)
+    await updateUi({ workspacePath: target })
+    return { ...(await readStatus()), folderId }
+  }
+
+  const syncNow = async () => {
+    if (!runtime.client) throw new SyncHttpError(409, 'client-inactive', 'client mode is not active; pair first')
+    const ui = await readUi()
+    const target = ui.workspacePath
+    if (!target) throw new SyncHttpError(409, 'no-workspace', 'mark a workspace first')
+    let marker
+    try {
+      marker = await readMarker(target)
+    } catch {
+      marker = undefined
+    }
+    if (!marker) throw new SyncHttpError(409, 'no-marker', 'workspace is not marked for sync')
+    const pushed = await runtime.client.pushCheckpoint(marker.folderId, target, {
+      message: 'manual sync',
+      author: runtime.deviceName,
+    })
+    const pulled = await runtime.client.pullCheckpoint(marker.folderId, target)
+    await updateUi({ lastSync: { at: Date.now(), pushed, pulled } })
+    return { ...(await readStatus()), pushed, pulled }
+  }
+
+  const issueCode = async (body) => {
+    if (!runtime.hub) throw new SyncHttpError(409, 'hub-inactive', 'host mode is not running')
+    if (body?.rotate) return { code: await runtime.hub.store.rotatePairing() }
+    return { code: runtime.hub.pairingCode() }
+  }
+
+  if (ctx.webServer && ctx.connection) {
+    const disposeRoutes = createSessionSyncRoutes({
+      webServer: ctx.webServer,
+      connection: ctx.connection,
+      handlers: {
+        status: readStatus,
+        setHost,
+        pair: pairClient,
+        unpair: unpairClient,
+        markWorkspace,
+        syncNow,
+        code: issueCode,
+      },
+      logger,
+    })
+    ctx.effect(() => () => disposeRoutes())
   }
 }
 

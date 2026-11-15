@@ -74,6 +74,28 @@ The CLI (`bin/session-sync.mjs init-hub|pair|status|code`) remains for
 automation and for a DSH agent that prefers shell commands. Marker files are
 watched, so a CLI write also applies without restarting DSH.
 
+## Settings page
+
+The bundle also ships a browser section (`client.js`) at **Settings → Session
+sync**. It controls the same markers the commands write:
+
+| Control | Effect |
+|---|---|
+| Host mode + port + bind | writes `hub.json`, starts/stops the hub, shows the pairing code |
+| Client target URL + code + name | pairs against a hub, writes `client.json`, starts/stops the client |
+| Workspace path + current session | writes `.dsh-sync.json` into the chosen folder |
+| Sync now | pushes a checkpoint and pulls the hub's newest one |
+
+The page calls exact Host routes under `/session-sync/api/...`
+(`status`, `host`, `pair`, `unpair`, `workspace`, `sync`, `code`). Connection
+checks the Host/Origin fence and browser Peer on every route. The section needs
+the Web carrier and the `connection` service; a headless composition without
+them simply has no page.
+
+Mode switches use the marker files, so they require `role: auto` (the bundle
+default). An explicit `role: hub` or `role: client` override in a profile patch
+wins over the markers and makes the host/client toggles ineffective.
+
 ## Opting a workspace in
 
 Automatic commits only touch a workspace that carries `.dsh-sync.json` at its

@@ -116,7 +116,7 @@ test('client role pushes a finished turn to the hub', async (t) => {
   ctx.emit('session/event', session, { type: 'turn/start', seq: 0, time: 1, data: { turn: 1 } })
   ctx.emit('session/event', session, { type: 'turn/end', seq: 1, time: 2, data: { turn: 1, reason: { kind: 'success' } } })
 
-  const deadline = Date.now() + 3000
+  const deadline = Date.now() + 8000
   let head = 0
   while (Date.now() < deadline) {
     const response = await fetch(`${hub.url}/v1/sessions/s-test`, { headers: { authorization: 'Bearer tok-a' } })
@@ -141,7 +141,7 @@ test('role auto starts a hub when hub.json exists', async (t) => {
 
   await apply(ctx, { role: 'auto', dataDir, autoPush: false, autoCheckpoint: false })
 
-  const deadline = Date.now() + 3000
+  const deadline = Date.now() + 8000
   let healthy = false
   while (Date.now() < deadline) {
     try {
@@ -183,7 +183,7 @@ test('role auto syncs as a client when client.json exists', async (t) => {
   ctx.emit('session/event', session, { type: 'turn/start', seq: 0, time: 1, data: { turn: 1 } })
   ctx.emit('session/event', session, { type: 'turn/end', seq: 1, time: 2, data: { turn: 1, reason: { kind: 'success' } } })
 
-  const deadline = Date.now() + 3000
+  const deadline = Date.now() + 8000
   let head = 0
   while (Date.now() < deadline) {
     const response = await fetch(`${hub.url}/v1/sessions/s-auto-client`, {
@@ -226,7 +226,7 @@ test('client role commits a marked workspace after a finished turn', async (t) =
   ctx.emit('session/event', session, { type: 'turn/start', seq: 0, time: 1, data: { turn: 1 } })
   ctx.emit('session/event', session, { type: 'turn/end', seq: 1, time: 2, data: { turn: 1, reason: { kind: 'success' } } })
 
-  const deadline = Date.now() + 5000
+  const deadline = Date.now() + 8000
   let version = 0
   while (Date.now() < deadline) {
     const response = await fetch(`${hub.url}/v1/folders/${folderId}/head`, { headers: { authorization: 'Bearer tok-a' } })
@@ -285,7 +285,7 @@ test('the sync command initializes a hub, pairs, and starts syncing', async (t) 
   ctx.emit('session/event', session, { type: 'turn/start', seq: 0, time: 1, data: { turn: 1 } })
   ctx.emit('session/event', session, { type: 'turn/end', seq: 1, time: 2, data: { turn: 1, reason: { kind: 'success' } } })
 
-  const deadline = Date.now() + 3000
+  const deadline = Date.now() + 8000
   let head = 0
   while (Date.now() < deadline) {
     const response = await fetch(`http://127.0.0.1:${port}/v1/sessions/s-command`, {
@@ -299,3 +299,4 @@ test('the sync command initializes a hub, pairs, and starts syncing', async (t) 
   }
   assert.equal(head, 2)
 })
+

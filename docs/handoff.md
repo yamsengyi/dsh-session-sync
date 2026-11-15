@@ -29,14 +29,17 @@ Do this and report every deviation:
    with action `install_bundle` and that GitHub URL as the target. The Registry
    dropdown does not apply to a GitHub URL. If the tool is not available, tell
    the operator to use Plugins > Add plugin and paste the same URL.
-2. Reload DSH once so the plugin code and /session-sync command load.
-3. Ask the operator to run this in DSH (or, if you have a Node executable, run
-   the installed CLI yourself):
-     /session-sync init-hub
-   This writes %USERPROFILE%\.dsh\dsh-sync\hub.json, starts the hub, and prints
-   a pairing code. Use `/session-sync init-hub 0.0.0.0 8787` only if clients must reach
-   this machine directly on the LAN; then allow inbound TCP 8787 on the Private
-   profile.
+2. Reload DSH once so the plugin code, the Settings section, and the
+   /session-sync command load.
+3. Ask the operator to open Settings > Session sync > Host mode, enable the
+   host, set port 8787, choose bind 127.0.0.1 (or 0.0.0.0 for direct LAN), and
+   press Apply. This writes %USERPROFILE%\.dsh\dsh-sync\hub.json and shows the
+   pairing code.
+   If the Settings page is unavailable, use `/session-sync init-hub` or, with a
+   Node executable, the installed CLI:
+     node "$env:DSH_PROFILE_DIR\node_modules\@yamsengyi\dsh-session-sync\bin\session-sync.mjs" init-hub --host 127.0.0.1 --port 8787
+   Use 0.0.0.0 only if clients must reach this machine directly on the LAN; then
+   allow inbound TCP 8787 on the Private profile.
 4. Publish the hub at https://sync.example.com with Cloudflare Tunnel
    (preferred):
      cloudflared tunnel login
@@ -51,6 +54,8 @@ Do this and report every deviation:
    (or `/session-sync code` in DSH).
 6. Verify:
      Invoke-RestMethod https://sync.example.com/v1/health
+     Ask the operator to pair a test device in Settings > Session sync >
+     Client mode, or run:
      /session-sync pair https://sync.example.com <code> server-selftest
      Invoke-RestMethod https://sync.example.com/v1/sessions -Headers @{ Authorization = "Bearer <token from client.json>" }
    Health must be 200 and the authenticated list must be 200. Delete the

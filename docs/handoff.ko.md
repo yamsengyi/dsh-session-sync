@@ -29,11 +29,13 @@ Do this and report every deviation:
    dropdown does not apply to a GitHub URL. If the tool is unavailable, tell the
    operator to use Plugins > Add plugin and paste the same URL.
 2. Reload DSH once so the plugin code and /session-sync command load.
-3. Start the hub. A human command cannot be invoked by the agent, so either:
-   a. ask the operator to type `/session-sync init-hub` in DSH, or
-   b. run the installed CLI if you have a Node executable:
+3. Start the hub. Preferred: ask the operator to open Settings > Session sync >
+   Host mode, enable it, set port 8787, choose bind 127.0.0.1 (or 0.0.0.0 for
+   direct LAN), and press Apply. This writes
+   %USERPROFILE%\.dsh\dsh-sync\hub.json and shows the pairing code.
+   If the Settings page is unavailable, ask for `/session-sync init-hub`, or run
+   the installed CLI if you have a Node executable:
       node "$env:DSH_PROFILE_DIR\node_modules\@yamsengyi\dsh-session-sync\bin\session-sync.mjs" init-hub --host 127.0.0.1 --port 8787
-   This writes %USERPROFILE%\.dsh\dsh-sync\hub.json and prints a pairing code.
    Use --host 0.0.0.0 instead only if clients must reach this machine directly
    on the LAN; then allow inbound TCP 8787 on the Private profile.
 4. Publish the hub at https://sync.example.com with Cloudflare Tunnel
@@ -52,7 +54,8 @@ Do this and report every deviation:
      Invoke-RestMethod https://sync.example.com/v1/health
      Invoke-RestMethod https://sync.example.com/v1/sessions -Headers @{ Authorization = "Bearer <token from client.json>" }
    Health must be 200 and the authenticated list must be 200. If you need a
-   test device, ask the operator to run:
+   test device, ask the operator to pair it in Settings > Session sync >
+   Client mode, or run:
      /session-sync pair https://sync.example.com <code> server-selftest
 7. Report: install result, hub listener, tunnel/Caddy status, health output,
    pairing-code file path (not the code itself), firewall and network-profile

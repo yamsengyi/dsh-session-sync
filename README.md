@@ -53,10 +53,29 @@ setup, and [docs/handoff.md](docs/handoff.md) to hand the server setup to that
 machine's DSH agent. The Korean version is
 [docs/handoff.ko.md](docs/handoff.ko.md).
 
+## Settings page
+
+After reloading DSH, open **Settings → Session sync**:
+
+- **Host mode** — enable the hub, choose the port and bind (`127.0.0.1` or LAN),
+  and read/copy/rotate the pairing code.
+- **Client mode** — enter the target URL in one line, fill it from the local host
+  settings, enter the pairing code and device name, then pair or unpair.
+- **Workspace** — type a path or fill it from the current session, then mark the
+  folder (`.dsh-sync.json`).
+- **Sync now** — push a checkpoint and pull the hub's newest one, with a result
+  summary.
+
+The page is a browser client that calls exact Host routes under
+`/session-sync/api/...`. Connection authenticates every request as the browser
+Peer; the bundle stays build-free. The `/session-sync` commands remain for
+automation.
+
 ## Layout
 
 ```
 index.js                  DSH host plugin (role auto | client | hub | idle)
+client.js                 Settings → Session sync browser section
 bin/session-sync.mjs      init-hub / pair / status / code CLI
 bin/hub.mjs               standalone hub, for a server without DSH
 src/hub-server.js         HTTP hub: pairing, auth, sessions, checkpoints, blobs
@@ -109,7 +128,7 @@ scanned or committed.
 ## Run the tests
 
 ```powershell
-& $node --test .\test\local.test.mjs .\test\plugin.test.mjs .\test\recovery.test.mjs .\test\pairing.test.mjs
+& $node --test --test-concurrency=1 .\test\local.test.mjs .\test\plugin.test.mjs .\test\recovery.test.mjs .\test\pairing.test.mjs .\test\ui-api.test.mjs
 ```
 
 `$node` is the bundled Node reported by the workspace dependency loader; any

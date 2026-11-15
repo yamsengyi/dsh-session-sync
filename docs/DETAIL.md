@@ -130,7 +130,20 @@ the plugin creates that folder empty on load, so a fresh install always has the
 same explicit default option. Override it with a fully qualified path when the
 account's Documents folder is redirected.
 
-## Default workspace vs shared workspace
+## Import a shared project (Join)
+
+`GET /session-sync/api/projects` proxies the hub's `GET /v1/folders` through the
+active client token. `POST /projects/prepare` creates the local folder, writes
+the marker with the selected hub folderId, and registers the DSH Workspace;
+`POST /projects/sync` pulls the checkpoint.
+
+The client UI's **Projects → Hub projects → Import** flow computes the default
+path as `<config.defaultWorkspace>/<project name>`, exposes a **경로 변경**
+input, and on confirm runs prepare → create/open a project session via
+`ctx.workspaces.create` and `ctx.uiWorkspace.openWorkspace` → pull. This is a
+single-root join; session history is not imported.
+
+## Default root vs shared projects
 
 The first-use workspace at `<Documents>\deepseek-harness\default-workspace` is
 created by DSH's workspace controller, not by this plugin. The plugin's own

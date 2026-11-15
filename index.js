@@ -15,7 +15,7 @@ import { hostname, homedir } from 'node:os'
 import { watch } from 'node:fs'
 import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import { basename, join } from 'node:path'
+import { basename, isAbsolute, join } from 'node:path'
 import { createHubServer } from './src/hub-server.js'
 import { SyncClient } from './src/sync-client.js'
 import { PROTOCOL_VERSION, SyncHttpError, sha256Hex } from './src/protocol.js'
@@ -107,6 +107,15 @@ function slugify(value) {
 function samePath(left, right) {
   const normalize = (value) => String(value ?? '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
   return normalize(left) === normalize(right)
+}
+
+function safeProjectFolder(value) {
+  const name = String(value ?? '')
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, '-')
+    .replace(/^[. ]+|[. ]+$/g, '')
+    .trim()
+    .slice(0, 80)
+  return name || 'project'
 }
 
 async function readJsonIfExists(path) {
@@ -430,6 +439,7 @@ export async function apply(ctx, raw) {
         sessionId: session.id,
         seq: Number.isInteger(event?.seq) ? event.seq : 0,
         author: runtime.deviceName,
+        name: basename(cwd),
       })
       state.at = Date.now()
       if (!result.skipped) {
@@ -1093,6 +1103,7 @@ export async function apply(ctx, raw) {
     const pushed = await runtime.client.pushCheckpoint(marker.folderId, target, {
       message: 'manual sync',
       author: runtime.deviceName,
+      name: basename(target),
     })
     await updateUi({ lastSync: { at: Date.now(), pulled, pushed, sessions } })
     return { ...(await readStatus()), pushed, pulled, sessions }
@@ -1107,6 +1118,51 @@ export async function apply(ctx, raw) {
   const scanWorkspaces = async () => {
     const scan = await scanDefaultProjects()
     return { ...(await readStatus()), scan }
+  }
+
+  const listProjects = async () => {
+    if (!runtime.client) throw new SyncHttpError(409, 'client-inactive', 'client mode is not active')
+    const result = await runtime.client.folders()
+    return { projects: Array.isArray(result?.folders) ? result.folders : [] }
+  }
+
+  const prepareProject = async (body) => {
+    const folderId = String(body?.folderId ?? '').trim()
+    if (!FOLDER_ID.test(folderId)) throw new SyncHttpError(400, 'invalid-project', 'invalid project id')
+    const name = safeProjectFolder(body?.name ?? folderId)
+    const requested = String(body?.path ?? '').trim()
+    const target = requested || join(config.defaultWorkspace, name)
+    if (!isAbsolute(target)) throw new SyncHttpError(400, 'invalid-path', 'project path must be absolute')
+    await mkdir(target, { recursive: true })
+    const marker = await readMarker(target).catch(() => undefined)
+    if (marker && marker.folderId !== folderId) {
+      throw new SyncHttpError(409, 'project-mismatch', 'folder already belongs to a different project')
+    }
+    if (!marker) await initFolder(target, folderId)
+    let workspaceId = null
+    const registry = ctx.workspaceRegistry
+    if (registry) {
+      const existing = await registry.resolveByPath(target)
+      const workspace = existing ?? await registry.create(target)
+      workspaceId = String(workspace.id)
+    }
+    await updateUi({ workspacePath: target })
+    return { folderId, name, path: target, workspaceId }
+  }
+
+  const syncProject = async (body) => {
+    if (!runtime.client) throw new SyncHttpError(409, 'client-inactive', 'client mode is not active')
+    const folderId = String(body?.folderId ?? '').trim()
+    if (!FOLDER_ID.test(folderId)) throw new SyncHttpError(400, 'invalid-project', 'invalid project id')
+    const target = String(body?.path ?? '').trim()
+    if (!isAbsolute(target)) throw new SyncHttpError(400, 'invalid-path', 'project path must be absolute')
+    const marker = await readMarker(target).catch(() => undefined)
+    if (!marker || marker.folderId !== folderId) {
+      throw new SyncHttpError(409, 'project-mismatch', 'folder does not belong to this project')
+    }
+    const pulled = await runtime.client.pullCheckpoint(folderId, target)
+    await updateUi({ workspacePath: target, lastSync: { at: Date.now(), pulled } })
+    return { ...(await readStatus()), pulled }
   }
 
   const checkUpdate = async (body) => {
@@ -1157,6 +1213,9 @@ export async function apply(ctx, raw) {
         unmarkWorkspace,
         sessionInfo,
         scanWorkspaces,
+        listProjects,
+        prepareProject,
+        syncProject,
         syncNow,
         code: issueCode,
         checkUpdate,
@@ -1179,5 +1238,5 @@ export async function pullFolder({ hubUrl, token, folderId, root, logger = conso
 /** Commit a folder to the hub outside the plugin lifecycle. */
 export async function pushFolder({ hubUrl, token, folderId, root, message = '', sessionId = null, seq = 0, author = '', logger = console }) {
   const client = new SyncClient({ baseUrl: hubUrl, token, logger })
-  return client.pushCheckpoint(folderId, root, { message, sessionId, seq, author })
+  return client.pushCheckpoint(folderId, root, { message, sessionId, seq, author, name: basename(root) })
 }

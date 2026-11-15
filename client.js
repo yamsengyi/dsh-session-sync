@@ -34,6 +34,18 @@ window.__ModuleLoader__.load({
         'projects.title': 'Projects',
         'projects.close': 'Close',
         'projects.empty': 'No saved projects',
+        'projects.hub': 'Hub projects',
+        'projects.join': 'Import',
+        'projects.none': 'No hub projects',
+        'projects.savePath': 'Save path',
+        'projects.changePath': 'Change path',
+        'projects.defaultPath': 'Default path',
+        'projects.cancel': 'Cancel',
+        'projects.confirm': 'Confirm',
+        'projects.joining': 'Creating the session and syncing…',
+        'projects.emptyWarning': 'An empty folder is recommended; existing files may conflict.',
+        'projects.rootHint': 'Shared root: {root}',
+        'projects.servicesMissing': 'Workspace/session service is unavailable.',
         'mode.host': 'Host',
         'mode.client': 'Client',
         'mode.both': 'Both',
@@ -68,7 +80,7 @@ window.__ModuleLoader__.load({
         'client.paired': 'Paired: {device} → {url}',
         'client.pairHint': 'Pair first, then apply the mode to start the client.',
         'off.hint': 'Applying stops both the host and the client. Settings and pairing tokens are kept.',
-        'workspace.heading': 'Shared workspace',
+        'workspace.heading': 'Shared projects',
         'workspace.path': 'Path',
         'workspace.useCurrent': 'Use current session path',
         'workspace.mark': 'Mark workspace',
@@ -79,7 +91,7 @@ window.__ModuleLoader__.load({
         'workspace.list': 'Workspaces',
         'workspace.badgeShared': 'Sharing (syncing)',
         'workspace.badgeLocal': 'Not shared',
-        'sync.heading': 'Sync',
+        'sync.heading': 'Project sync',
         'sync.now': 'Sync now (sessions + workspace)',
         'sync.last': 'Last: {time} · sessions {sessions}/{events} events · pull {pull} · push {push} · conflicts {conflicts}',
         'sync.noChanges': '(no changes)',
@@ -118,6 +130,18 @@ window.__ModuleLoader__.load({
         'projects.title': '项目',
         'projects.close': '关闭',
         'projects.empty': '暂无已保存项目',
+        'projects.hub': '中枢项目',
+        'projects.join': '导入',
+        'projects.none': '没有中枢项目',
+        'projects.savePath': '保存路径',
+        'projects.changePath': '更改路径',
+        'projects.defaultPath': '默认路径',
+        'projects.cancel': '取消',
+        'projects.confirm': '确认',
+        'projects.joining': '正在创建会话并同步…',
+        'projects.emptyWarning': '建议使用空文件夹；已有文件可能冲突。',
+        'projects.rootHint': '共享根目录：{root}',
+        'projects.servicesMissing': '工作区/会话服务不可用。',
         'mode.host': '主机',
         'mode.client': '客户端',
         'mode.both': '两者',
@@ -152,7 +176,7 @@ window.__ModuleLoader__.load({
         'client.paired': '已配对：{device} → {url}',
         'client.pairHint': '请先配对，然后应用模式以启动客户端。',
         'off.hint': '应用后将停止主机和客户端。设置和配对令牌会保留。',
-        'workspace.heading': '共享工作区',
+        'workspace.heading': '共享项目',
         'workspace.path': '路径',
         'workspace.useCurrent': '当前会话路径',
         'workspace.mark': '标记工作区',
@@ -163,7 +187,7 @@ window.__ModuleLoader__.load({
         'workspace.list': '工作区列表',
         'workspace.badgeShared': '共享中（同步中）',
         'workspace.badgeLocal': '未共享',
-        'sync.heading': '同步',
+        'sync.heading': '项目同步',
         'sync.now': '立即同步（会话 + 工作区）',
         'sync.last': '上次：{time} · 会话 {sessions}/{events} 个事件 · 拉取 {pull} · 推送 {push} · 冲突 {conflicts}',
         'sync.noChanges': '（无变化）',
@@ -202,6 +226,18 @@ window.__ModuleLoader__.load({
         'projects.title': '프로젝트',
         'projects.close': '닫기',
         'projects.empty': '저장된 프로젝트가 없습니다',
+        'projects.hub': '허브 프로젝트',
+        'projects.join': '가져오기',
+        'projects.none': '허브 프로젝트가 없습니다',
+        'projects.savePath': '저장 경로',
+        'projects.changePath': '경로 변경',
+        'projects.defaultPath': '기본 경로',
+        'projects.cancel': '취소',
+        'projects.confirm': '확인',
+        'projects.joining': '세션 생성 및 동기화 중…',
+        'projects.emptyWarning': '빈 폴더를 권장합니다. 기존 파일이 있으면 충돌할 수 있습니다.',
+        'projects.rootHint': '공유 루트: {root}',
+        'projects.servicesMissing': '워크스페이스/세션 서비스를 사용할 수 없습니다.',
         'mode.host': '호스트',
         'mode.client': '클라이언트',
         'mode.both': '둘 다',
@@ -236,7 +272,7 @@ window.__ModuleLoader__.load({
         'client.paired': '페어링됨: {device} → {url}',
         'client.pairHint': '페어링 후 모드 적용으로 클라이언트를 시작합니다.',
         'off.hint': '모드 적용 시 호스트와 클라이언트를 모두 중지합니다. 설정과 페어링 토큰은 유지됩니다.',
-        'workspace.heading': '공유 워크스페이스',
+        'workspace.heading': '공유 프로젝트',
         'workspace.path': '경로',
         'workspace.useCurrent': '현재 세션 경로',
         'workspace.mark': '워크스페이스 지정',
@@ -247,7 +283,7 @@ window.__ModuleLoader__.load({
         'workspace.list': '워크스페이스 목록',
         'workspace.badgeShared': '공유중(동기화중)',
         'workspace.badgeLocal': '공유하지 않음',
-        'sync.heading': '동기화',
+        'sync.heading': '프로젝트 동기화',
         'sync.now': '지금 동기화 (세션 + 워크스페이스)',
         'sync.last': '마지막: {time} · 세션 {sessions}/{events} 이벤트 · pull {pull} · push {push} · 충돌 {conflicts}',
         'sync.noChanges': '(변경 없음)',
@@ -512,25 +548,51 @@ window.__ModuleLoader__.load({
       shared: { flex: '0 0 auto', fontSize: 10, padding: '1px 5px', borderRadius: 3, color: '#7fd39a', background: 'rgba(60,154,95,0.18)' },
       local: { flex: '0 0 auto', fontSize: 10, padding: '1px 5px', borderRadius: 3, color: '#9aa0a6', background: 'rgba(127,127,127,0.12)' },
       hint: { margin: 0, fontSize: 12, opacity: 0.7 },
+      input: { padding: '6px 8px', borderRadius: 6, border: '1px solid rgba(127,127,127,0.4)', background: 'transparent', color: 'inherit', font: 'inherit', width: '100%', boxSizing: 'border-box' },
+      actions: { display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' },
+      primary: { padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(60,154,95,0.55)', background: 'rgba(60,154,95,0.18)', color: 'inherit', cursor: 'pointer', fontSize: 12 },
     }
 
-    /** Projects button beside New session, with a grouped modal. */
-    function ProjectsAction({ wide, children }) {
+    function projectFolderName(value) {
+      return String(value ?? '')
+        .replace(/[<>:"/\\|?*\u0000-\u001f]/g, '-')
+        .replace(/^[. ]+|[. ]+$/g, '')
+        .trim()
+        .slice(0, 80) || 'project'
+    }
+
+    /** Projects button beside New session, with a grouped modal and a Join flow. */
+    function ProjectsAction({ wide, children, workspaces, uiWorkspace }) {
       const [open, setOpen] = useState(false)
       const [status, setStatus] = useState(null)
       const [error, setError] = useState('')
+      const [hubProjects, setHubProjects] = useState([])
+      const [projectsError, setProjectsError] = useState('')
+      const [joinProject, setJoinProject] = useState(null)
+      const [joinPath, setJoinPath] = useState('')
+      const [editingPath, setEditingPath] = useState(false)
+      const [joining, setJoining] = useState(false)
       const lang = readLanguage() === 'auto' ? detectLanguage() : readLanguage()
-      const tr = (key) => translate(lang, key)
+      const tr = (key, params) => translate(lang, key, params)
 
       useEffect(() => {
         if (!open) return undefined
         let alive = true
         setStatus(null)
         setError('')
+        setProjectsError('')
+        setHubProjects([])
+        setJoinProject(null)
         void call('status').then((data) => {
           if (alive) setStatus(data)
         }).catch((reason) => {
           if (alive) setError(String(reason?.message ?? reason))
+        })
+        void call('projects').then((data) => {
+          if (!alive) return
+          setHubProjects(Array.isArray(data?.projects) ? data.projects : [])
+        }).catch((reason) => {
+          if (alive) setProjectsError(String(reason?.message ?? reason))
         })
         const onKey = (event) => {
           if (event.key === 'Escape') setOpen(false)
@@ -542,12 +604,59 @@ window.__ModuleLoader__.load({
         }
       }, [open])
 
+      const defaultPath = (project) => {
+        const root = String(status?.defaultWorkspace ?? '').replace(/[\\/]+$/, '')
+        if (!root) return ''
+        return `${root}\\${projectFolderName(project?.name || project?.id || '')}`
+      }
+
+      const selectProject = (project) => {
+        setJoinProject(project)
+        setJoinPath(defaultPath(project))
+        setEditingPath(false)
+        setError('')
+      }
+
+      const confirmJoin = async () => {
+        if (!joinProject || !joinPath.trim() || joining) return
+        if (!workspaces || !uiWorkspace) {
+          setError(tr('projects.servicesMissing'))
+          return
+        }
+        setJoining(true)
+        setError('')
+        try {
+          const prepared = await call('projects/prepare', {
+            folderId: joinProject.id,
+            name: joinProject.name,
+            path: joinPath.trim(),
+          })
+          const workspace = await workspaces.create({ path: prepared.path })
+          await uiWorkspace.openWorkspace(workspace.workspaceId)
+          await call('projects/sync', { folderId: prepared.folderId, path: prepared.path })
+          setJoinProject(null)
+          setOpen(false)
+        } catch (reason) {
+          setError(String(reason?.message ?? reason))
+        } finally {
+          setJoining(false)
+        }
+      }
+
       const shared = status?.knownWorkspaces?.filter((ws) => ws.shared) ?? []
       const local = status?.knownWorkspaces?.filter((ws) => !ws.shared) ?? []
       const row = (ws) => h('div', { key: ws.path, style: projectStyles.row },
         h('span', { style: projectStyles.path, title: ws.path }, ws.path),
         h('span', { style: ws.shared ? projectStyles.shared : projectStyles.local },
           ws.shared ? tr('workspace.badgeShared') : tr('workspace.badgeLocal')))
+      const hubRow = (project) => h('div', { key: project.id, style: projectStyles.row },
+        h('span', { style: projectStyles.path, title: project.id }, project.name || project.id),
+        h('span', { style: projectStyles.hint }, `v${project.headVersion ?? 0}`),
+        h('button', {
+          type: 'button',
+          style: projectStyles.button,
+          onClick: () => selectProject(project),
+        }, tr('projects.join')))
 
       return h(React.Fragment, null,
         children,
@@ -563,7 +672,9 @@ window.__ModuleLoader__.load({
         }, wide ? tr('projects.title') : '▦'),
         open ? h('div', {
           style: projectStyles.overlay,
-          onClick: () => setOpen(false),
+          onClick: () => {
+            if (!joining) setOpen(false)
+          },
         }, h('div', {
           style: projectStyles.modal,
           role: 'dialog',
@@ -576,18 +687,72 @@ window.__ModuleLoader__.load({
             h('button', {
               type: 'button',
               style: projectStyles.close,
+              disabled: joining,
               onClick: () => setOpen(false),
             }, tr('projects.close'))),
           error ? h('p', { style: projectStyles.hint }, error) : null,
-          shared.length ? h('div', { style: projectStyles.group },
-            h('span', { style: projectStyles.heading }, tr('projects.shared')),
-            shared.map(row)) : null,
-          local.length ? h('div', { style: projectStyles.group },
-            h('span', { style: projectStyles.heading }, tr('projects.local')),
-            local.map(row)) : null,
-          !error && status && shared.length === 0 && local.length === 0
-            ? h('p', { style: projectStyles.hint }, tr('projects.empty'))
-            : null,
+          joinProject ? h('div', { style: projectStyles.group },
+            h('span', { style: projectStyles.heading }, joinProject.name || joinProject.id),
+            h('p', { style: projectStyles.hint }, tr('projects.rootHint', {
+              root: status?.defaultWorkspace ?? '',
+            })),
+            h('span', { style: projectStyles.heading }, tr('projects.savePath')),
+            h('div', { style: projectStyles.row },
+              h('span', { style: projectStyles.path, title: joinPath }, joinPath || '—'),
+              h('button', {
+                type: 'button',
+                style: projectStyles.button,
+                disabled: joining,
+                onClick: () => setEditingPath((value) => !value),
+              }, tr('projects.changePath'))),
+            editingPath ? h('input', {
+              value: joinPath,
+              style: projectStyles.input,
+              disabled: joining,
+              onChange: (event) => setJoinPath(event.target.value),
+            }) : null,
+            h('p', { style: projectStyles.hint }, tr('projects.emptyWarning')),
+            h('div', { style: projectStyles.actions },
+              h('button', {
+                type: 'button',
+                style: projectStyles.button,
+                disabled: joining,
+                onClick: () => {
+                  setJoinPath(defaultPath(joinProject))
+                  setEditingPath(false)
+                },
+              }, tr('projects.defaultPath')),
+              h('button', {
+                type: 'button',
+                style: projectStyles.button,
+                disabled: joining,
+                onClick: () => {
+                  setJoinProject(null)
+                  setEditingPath(false)
+                },
+              }, tr('projects.cancel')),
+              h('button', {
+                type: 'button',
+                style: projectStyles.primary,
+                disabled: joining || !joinPath.trim(),
+                onClick: confirmJoin,
+              }, tr('projects.confirm'))),
+            joining ? h('p', { style: projectStyles.hint }, tr('projects.joining')) : null) : h(React.Fragment, null,
+            h('div', { style: projectStyles.group },
+              h('span', { style: projectStyles.heading }, tr('projects.hub')),
+              projectsError ? h('p', { style: projectStyles.hint }, projectsError) : null,
+              !projectsError && hubProjects.length === 0
+                ? h('p', { style: projectStyles.hint }, tr('projects.none'))
+                : hubProjects.map(hubRow)),
+            shared.length ? h('div', { style: projectStyles.group },
+              h('span', { style: projectStyles.heading }, tr('projects.shared')),
+              shared.map(row)) : null,
+            local.length ? h('div', { style: projectStyles.group },
+              h('span', { style: projectStyles.heading }, tr('projects.local')),
+              local.map(row)) : null,
+            !error && status && shared.length === 0 && local.length === 0
+              ? h('p', { style: projectStyles.hint }, tr('projects.empty'))
+              : null),
         )) : null)
     }
 
@@ -893,8 +1058,13 @@ window.__ModuleLoader__.load({
     }
 
     return {
-      inject: ['slots'],
+      inject: ['slots', 'workspaces', 'uiWorkspace'],
       apply(ctx) {
+        const ProjectsEntry = (props) => h(ProjectsAction, {
+          ...props,
+          workspaces: ctx.workspaces,
+          uiWorkspace: ctx.uiWorkspace,
+        })
         ctx.slots.inject('settings.section', () => ctx.slots.register({
           name: 'settings.section',
           id: 'session-sync',
@@ -909,7 +1079,7 @@ window.__ModuleLoader__.load({
         ctx.slots.inject('sidebar.session.action', () => ctx.slots.register({
           name: 'sidebar.session.action',
           id: 'session-sync-projects',
-        }, ProjectsAction))
+        }, ProjectsEntry))
       },
     }
   },

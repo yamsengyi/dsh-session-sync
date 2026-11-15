@@ -1,6 +1,7 @@
 import { createReadStream, createWriteStream } from 'node:fs'
 import { chmod, mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { dirname, isAbsolute, join, relative } from 'node:path'
+import { basename } from 'node:path'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import {
@@ -149,6 +150,10 @@ export class SyncClient {
     return this.json(`/v1/folders/${encodeURIComponent(folderId)}/head`)
   }
 
+  async folders() {
+    return this.json('/v1/folders')
+  }
+
   async missingBlobs(folderId, hashes) {
     if (hashes.length === 0) return { missing: [] }
     return this.json(`/v1/folders/${encodeURIComponent(folderId)}/blobs/missing`, {
@@ -223,6 +228,7 @@ export class SyncClient {
     const result = await this.json(`/v1/folders/${encodeURIComponent(folderId)}/checkpoints`, {
       method: 'POST',
       body: {
+        name: options.name ?? basename(root),
         checkpoint: {
           sessionId: options.sessionId ?? null,
           seq: options.seq ?? 0,

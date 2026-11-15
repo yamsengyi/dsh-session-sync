@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.8.0` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.9.0` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -114,7 +114,24 @@ safest first-sync target.
 [New session 옆 Projects 진입 샘플](docs/assets/projects-entry-sample.png) ·
 [Workspace decoration 한계/upstream 요청 메모](docs/workspace-status-decoration.md)
 
-## Default workspace vs shared workspace
+## Import a shared project (Join)
+
+On the receiving PC, open the **Projects** modal beside **New session** and choose
+**Hub projects → Import**:
+
+1. The default save path is `<shared root>/<project name>`, where the shared root
+   is `defaultWorkspace` (`~\Documents\deepseek-harness\sync-default` by default).
+2. **경로 변경** exposes the path input; **기본 경로** restores the default.
+3. **확인** performs the requested order:
+   - create the local folder/marker and register the DSH Workspace,
+   - create/open a project session in that workspace,
+   - pull the hub checkpoint into the folder.
+
+Use an empty folder when possible. This is a per-project operation: one project
+maps to one local root; multiple roots per project are not supported. Session
+history is not imported—Join handles workspace files only.
+
+## Default root vs shared projects
 
 DSH creates its own first-use workspace at
 `<Documents>\deepseek-harness\default-workspace`; this plugin never creates or

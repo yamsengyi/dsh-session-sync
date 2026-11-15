@@ -29,9 +29,9 @@ Do this and report every deviation:
    dropdown does not apply to a GitHub URL. If the tool is unavailable, tell the
    operator to use Plugins > Add plugin and paste the same URL.
 2. Reload DSH once so the plugin code and /session-sync command load.
-3. Start the hub. Preferred: ask the operator to open Settings > Session sync >
-   Host mode, enable it, set port 8787, choose bind 127.0.0.1 (or 0.0.0.0 for
-   direct LAN), and press Apply. This writes
+3. Start the hub. Preferred: ask the operator to open Settings > Session sync,
+   choose mode Host (or Both), set port 8787, choose bind 127.0.0.1 (or 0.0.0.0
+   for direct LAN), and press Apply. This writes
    %USERPROFILE%\.dsh\dsh-sync\hub.json and shows the pairing code.
    If the Settings page is unavailable, ask for `/session-sync init-hub`, or run
    the installed CLI if you have a Node executable:
@@ -54,8 +54,8 @@ Do this and report every deviation:
      Invoke-RestMethod https://sync.example.com/v1/health
      Invoke-RestMethod https://sync.example.com/v1/sessions -Headers @{ Authorization = "Bearer <token from client.json>" }
    Health must be 200 and the authenticated list must be 200. If you need a
-   test device, ask the operator to pair it in Settings > Session sync >
-   Client mode, or run:
+   test device, ask the operator to pair it in Settings > Session sync
+   (mode Client or Both, then Pair), or run:
      /session-sync pair https://sync.example.com <code> server-selftest
 7. Report: install result, hub listener, tunnel/Caddy status, health output,
    pairing-code file path (not the code itself), firewall and network-profile

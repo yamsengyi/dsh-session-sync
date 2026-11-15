@@ -356,10 +356,13 @@ export async function apply(ctx, raw) {
       ? { hubUrl: config.hubUrl, token: config.token, deviceName: config.deviceName }
       : undefined
     const settings = clientConfig ?? fallback
-    const wantHub = config.role === 'hub' || (config.role === 'auto' && Boolean(hubConfig))
+    const hubEnabled = Boolean(hubConfig) && hubConfig.enabled !== false
+    const clientConfigured = clientConfig
+      ? clientConfig.enabled !== false
+      : Boolean(fallback)
+    const wantHub = config.role === 'hub' || (config.role === 'auto' && hubEnabled)
     const wantClient = config.role === 'client'
-      || (config.role === 'auto' && Boolean(clientConfig))
-      || Boolean(settings)
+      || ((config.role === 'auto' || config.role === 'hub') && clientConfigured)
 
     if (wantHub) {
       const desiredHost = hubConfig?.host ?? config.hubHost
@@ -570,10 +573,15 @@ export async function apply(ctx, raw) {
       }
     }
     const runningHub = runtime.hub
+    const hubEnabled = Boolean(hubConfig) && hubConfig.enabled !== false
+    const clientEnabled = Boolean(clientConfig) && clientConfig.enabled !== false
+    const mode = hubEnabled && clientEnabled ? 'both' : hubEnabled ? 'host' : clientEnabled ? 'client' : 'off'
     return {
+      mode,
       role: config.role,
       hub: {
         configured: Boolean(hubConfig),
+        enabled: hubEnabled,
         running: Boolean(runningHub),
         host: runningHub?.host ?? hubConfig?.host ?? config.hubHost,
         port: runningHub?.port ?? hubConfig?.port ?? config.hubPort,
@@ -582,6 +590,7 @@ export async function apply(ctx, raw) {
       },
       client: {
         paired: Boolean(clientConfig),
+        enabled: clientEnabled,
         running: Boolean(runtime.client),
         hubUrl: clientConfig?.hubUrl ?? null,
         deviceName: clientConfig?.deviceName ?? null,
@@ -596,26 +605,45 @@ export async function apply(ctx, raw) {
     }
   }
 
-  const setHost = async (body) => {
-    const enabled = body?.enabled !== false
-    if (!enabled) {
-      await rm(hubConfigPath, { force: true })
-      await resolveRoles()
-      return readStatus()
+  const setMode = async (body) => {
+    const mode = String(body?.mode ?? '')
+    if (mode !== 'host' && mode !== 'client' && mode !== 'both' && mode !== 'off') {
+      throw new SyncHttpError(400, 'invalid-mode', 'mode must be host, client, both, or off')
     }
-    const port = Number(body?.port ?? config.hubPort)
-    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    const hubConfig = await readJsonIfExists(hubConfigPath)
+    const clientConfig = await readJsonIfExists(clientConfigPath)
+    if ((mode === 'client' || mode === 'both') && !clientConfig) {
+      throw new SyncHttpError(409, 'not-paired', 'pair this machine first')
+    }
+    const wantsHub = mode === 'host' || mode === 'both'
+    const port = Number(body?.port ?? hubConfig?.port ?? config.hubPort)
+    if (wantsHub && (!Number.isInteger(port) || port < 1 || port > 65535)) {
       throw new SyncHttpError(400, 'invalid-port', 'port must be 1..65535')
     }
-    const bind = String(body?.bind ?? config.hubHost)
-    const existing = await readJsonIfExists(hubConfigPath)
-    await mkdir(dataDir, { recursive: true })
-    await writeJsonAtomic(hubConfigPath, {
-      enabled: true,
-      host: bind,
-      port,
-      createdAt: existing?.createdAt ?? new Date().toISOString(),
-    })
+    const bind = String(body?.bind ?? hubConfig?.host ?? config.hubHost)
+    if (wantsHub) {
+      await mkdir(dataDir, { recursive: true })
+      await writeJsonAtomic(hubConfigPath, {
+        ...hubConfig,
+        enabled: true,
+        host: bind,
+        port,
+        createdAt: hubConfig?.createdAt ?? new Date().toISOString(),
+      })
+    } else if (hubConfig) {
+      await writeJsonAtomic(hubConfigPath, {
+        ...hubConfig,
+        enabled: false,
+        host: hubConfig.host ?? bind,
+        port: hubConfig.port ?? port,
+      })
+    }
+    if (clientConfig) {
+      await writeJsonAtomic(clientConfigPath, {
+        ...clientConfig,
+        enabled: mode === 'client' || mode === 'both',
+      })
+    }
     await resolveRoles()
     return readStatus()
   }
@@ -639,6 +667,7 @@ export async function apply(ctx, raw) {
       hubUrl,
       token: payload.token,
       deviceName: payload.device ?? name,
+      enabled: true,
       pairedAt: new Date().toISOString(),
     })
     await resolveRoles()
@@ -699,7 +728,7 @@ export async function apply(ctx, raw) {
       connection: ctx.connection,
       handlers: {
         status: readStatus,
-        setHost,
+        setMode,
         pair: pairClient,
         unpair: unpairClient,
         markWorkspace,

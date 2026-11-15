@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.3.2` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.4.0` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -57,14 +57,22 @@ machine's DSH agent. The Korean version is
 
 After reloading DSH, open **Settings → Session sync**:
 
-- **Host mode** — enable the hub, choose the port and bind (`127.0.0.1` or LAN),
-  and read/copy/rotate the pairing code.
-- **Client mode** — enter the target URL in one line, fill it from the local host
-  settings, enter the pairing code and device name, then pair or unpair.
-- **Workspace** — type a path or fill it from the current session, then mark the
-  folder (`.dsh-sync.json`).
-- **Sync now** — pull the hub's newest checkpoint, then push the workspace's
-  current state, with a result summary.
+- **Mode** — choose Host, Client, Both, or Off. The choice is a draft; the
+  **Apply** button commits it. The current running state is shown beside it, so
+  a toggle never starts or stops the hub on its own.
+- **Host settings** (Host/Both) — port, concrete bind address, and the pairing
+  code with copy/rotate.
+- **Client settings** (Client/Both) — target URL in one line, fill it from the
+  local host settings, enter the pairing code and device name, then pair or
+  unpair.
+- **Workspace** (Client/Both) — type a path or fill it from the current session,
+  then mark the folder (`.dsh-sync.json`).
+- **Sync now** (Client/Both) — pull the hub's newest checkpoint, then push the
+  workspace's current state, with a result summary.
+
+Mode changes preserve the other role's configuration and token by writing an
+`enabled` flag into `hub.json` / `client.json`; **Off** leaves both files in
+place.
 
 The page is a browser client that calls exact Host routes under
 `/session-sync/api/...`. Connection authenticates every request as the browser

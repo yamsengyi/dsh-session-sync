@@ -31,10 +31,10 @@ Do this and report every deviation:
    the operator to use Plugins > Add plugin and paste the same URL.
 2. Reload DSH once so the plugin code, the Settings section, and the
    /session-sync command load.
-3. Ask the operator to open Settings > Session sync > Host mode, enable the
-   host, set port 8787, choose bind 127.0.0.1 (or 0.0.0.0 for direct LAN), and
-   press Apply. This writes %USERPROFILE%\.dsh\dsh-sync\hub.json and shows the
-   pairing code.
+3. Ask the operator to open Settings > Session sync, choose mode Host (or Both),
+   set port 8787, choose bind 127.0.0.1 (or 0.0.0.0 for direct LAN), and press
+   Apply. This writes %USERPROFILE%\.dsh\dsh-sync\hub.json and shows the pairing
+   code.
    If the Settings page is unavailable, use `/session-sync init-hub` or, with a
    Node executable, the installed CLI:
      node "$env:DSH_PROFILE_DIR\node_modules\@yamsengyi\dsh-session-sync\bin\session-sync.mjs" init-hub --host 127.0.0.1 --port 8787
@@ -54,8 +54,8 @@ Do this and report every deviation:
    (or `/session-sync code` in DSH).
 6. Verify:
      Invoke-RestMethod https://sync.example.com/v1/health
-     Ask the operator to pair a test device in Settings > Session sync >
-     Client mode, or run:
+     Ask the operator to pair a test device in Settings > Session sync
+     (mode Client or Both, then Pair), or run:
      /session-sync pair https://sync.example.com <code> server-selftest
      Invoke-RestMethod https://sync.example.com/v1/sessions -Headers @{ Authorization = "Bearer <token from client.json>" }
    Health must be 200 and the authenticated list must be 200. Delete the

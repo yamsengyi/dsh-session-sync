@@ -18,11 +18,12 @@ The server must have DSH running for the hub to be reachable.
    its default (a GitHub URL bypasses the npm registry).
 2. Reload DSH once so the plugin code, the client section, and the
    `/session-sync` command load.
-3. Open **Settings → Session sync → Host mode**:
-   - enable the host,
+3. Open **Settings → Session sync**:
+   - choose mode **Host** (or **Both**),
    - set port `8787`,
    - choose bind `127.0.0.1` (proxy/tunnel) or `0.0.0.0` (direct LAN),
-   - press **Apply**. The pairing code appears in the page and in
+   - press **Apply**. The current state badge shows the running hub, and the
+     pairing code appears in the page and in
      `%USERPROFILE%\.dsh\dsh-sync\hub\pairing-code.txt`.
 4. On later DSH starts the plugin reads `hub.json` and starts the hub
    automatically.
@@ -43,12 +44,15 @@ Get-NetTCPConnection -LocalPort 8787 | Select-Object LocalAddress,State
 ## 2. Client setup
 
 1. Install the same GitHub URL on the client and reload DSH once.
-2. Open **Settings → Session sync → Client mode**:
+2. Open **Settings → Session sync**:
+   - choose mode **Client** (or **Both**),
    - enter the target URL in one line, for example
      `https://sync.example.com` or `http://11.11.1.77:8787`,
    - use **Use host info** when the host is this machine to fill the URL and
      pairing code,
-   - enter the pairing code and a device name, then press **Pair**.
+   - enter the pairing code and a device name, then press **Pair**,
+   - press **Apply** to commit the mode. The state badge shows the running
+     client.
 3. The client writes `client.json` and starts syncing immediately. On later
    DSH starts it resumes automatically.
 
@@ -119,8 +123,9 @@ the certificate automatically.
 
 ### LAN only
 
-In **Settings → Session sync → Host mode**, choose bind `0.0.0.0`, set the port,
-and press **Apply** (or run `/session-sync init-hub 0.0.0.0 8787`).
+In **Settings → Session sync**, choose mode **Host** (or **Both**), set bind
+`0.0.0.0`, set the port, and press **Apply** (or run
+`/session-sync init-hub 0.0.0.0 8787`).
 
 In an elevated PowerShell:
 
@@ -131,8 +136,8 @@ New-NetFirewallRule -DisplayName "DSH sync hub" -Direction Inbound `
 ```
 
 Clients enter `http://<server-lan-ip>:8787` and the pairing code in
-**Settings → Session sync → Client mode**. This leg is plain HTTP; use it only
-on a trusted network.
+**Settings → Session sync** (mode Client or Both). This leg is plain HTTP; use
+it only on a trusted network.
 
 ## 4. Backup and restore
 

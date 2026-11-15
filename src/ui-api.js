@@ -65,7 +65,7 @@ export function createSessionSyncRoutes(options) {
   }
 
   register('GET', '/session-sync/api/status', () => handlers.status())
-  register('POST', '/session-sync/api/host', (body) => handlers.setHost(body))
+  register('POST', '/session-sync/api/mode', (body) => handlers.setMode(body))
   register('POST', '/session-sync/api/pair', (body) => handlers.pair(body))
   register('POST', '/session-sync/api/unpair', () => handlers.unpair())
   register('POST', '/session-sync/api/workspace', (body) => handlers.markWorkspace(body))

@@ -47,7 +47,7 @@ function response() {
 function baseHandlers(overrides = {}) {
   return {
     status: async () => ({ ok: true }),
-    setHost: async (body) => ({ host: body }),
+    setMode: async (body) => ({ host: body }),
     pair: async (body) => ({ pair: body }),
     unpair: async () => ({ paired: false }),
     markWorkspace: async (body) => ({ workspace: body }),
@@ -66,7 +66,7 @@ test('status route answers JSON and GET routes reject a POST', async () => {
   assert.deepEqual(JSON.parse(statusRes.body), { ok: true })
 
   const hostRes = response()
-  routes.get('/session-sync/api/host').handler(request('GET'), hostRes)
+  routes.get('/session-sync/api/mode').handler(request('GET'), hostRes)
   await hostRes.done
   assert.equal(hostRes.statusCode, 405)
   assert.equal(hostRes.headers.allow, 'POST')
@@ -75,13 +75,13 @@ test('status route answers JSON and GET routes reject a POST', async () => {
 test('a POST body reaches its handler', async () => {
   let received
   const { routes } = harness(baseHandlers({
-    setHost: async (body) => {
+    setMode: async (body) => {
       received = body
       return { applied: true }
     },
   }))
   const res = response()
-  routes.get('/session-sync/api/host').handler(request('POST', { enabled: true, port: 9000 }), res)
+  routes.get('/session-sync/api/mode').handler(request('POST', { enabled: true, port: 9000 }), res)
   await res.done
   assert.deepEqual(received, { enabled: true, port: 9000 })
   assert.equal(res.statusCode, 200)
@@ -117,3 +117,4 @@ test('disposing the routes removes every registration', () => {
   dispose()
   assert.equal(routes.size, 0)
 })
+

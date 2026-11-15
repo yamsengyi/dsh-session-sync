@@ -81,13 +81,18 @@ sync**. It controls the same markers the commands write:
 
 | Control | Effect |
 |---|---|
-| Host mode + port + bind | writes `hub.json`, starts/stops the hub, shows the pairing code |
-| Client target URL + code + name | pairs against a hub, writes `client.json`, starts/stops the client |
-| Workspace path + current session | writes `.dsh-sync.json` into the chosen folder |
-| Sync now | pulls the hub's newest checkpoint, then pushes the local workspace |
+| Mode (Host / Client / Both / Off) + Apply | writes `enabled` flags into `hub.json` / `client.json`; the other role's settings and token are preserved |
+| Host port + bind (Host/Both) | updates `hub.json` and starts/stops the hub; shows the pairing code |
+| Client target URL + code + name (Client/Both) | pairs against a hub, writes `client.json`, starts/stops the client |
+| Workspace path + current session (Client/Both) | writes `.dsh-sync.json` into the chosen folder |
+| Sync now (Client/Both) | pulls the hub's newest checkpoint, then pushes the local workspace |
+
+The mode selection is a draft; **Apply** commits it, and the current running
+state is shown beside the selector so a toggle never starts or stops the hub on
+its own.
 
 The page calls exact Host routes under `/session-sync/api/...`
-(`status`, `host`, `pair`, `unpair`, `workspace`, `sync`, `code`). Connection
+(`status`, `mode`, `pair`, `unpair`, `workspace`, `sync`, `code`). Connection
 checks the Host/Origin fence and browser Peer on every route. The section needs
 the Web carrier and the `connection` service; a headless composition without
 them simply has no page.

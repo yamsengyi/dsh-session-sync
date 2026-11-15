@@ -971,6 +971,11 @@ export async function apply(ctx, raw) {
       throw new SyncHttpError(400, 'invalid-path', 'workspace path does not exist')
     }
     if (!info.isDirectory()) throw new SyncHttpError(400, 'invalid-path', 'workspace path is not a directory')
+    // In children mode the shared root is a container, never a project. Marking
+    // it would snapshot every child as one folder, contradicting the design.
+    if (config.defaultWorkspaceMode === 'children' && samePath(target, config.defaultWorkspace)) {
+      throw new SyncHttpError(400, 'container-not-project', 'the shared root is a container; share a project folder inside it')
+    }
     const folderId = await initFolder(target)
     const current = await readUi()
     const unshared = Array.isArray(current.unsharedWorkspaces)

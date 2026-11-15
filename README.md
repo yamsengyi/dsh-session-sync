@@ -4,6 +4,10 @@ A DSH bundle that adds a personal sync hub for sessions and workspace
 snapshots. One machine runs DSH and hosts the hub; every other PC installs the
 bundle once, pairs with a code, and then only needs DSH started.
 
+**Manual & flowcharts (Korean):** [docs/manual.ko.md](docs/manual.ko.md) documents
+the current behavior end-to-end with mermaid flowcharts and a flow-review section
+listing the disconnected steps that were found and fixed.
+
 ## Install
 
 **Plugins → Add plugin**, then paste:
@@ -14,7 +18,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.9.6` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.9.7` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 

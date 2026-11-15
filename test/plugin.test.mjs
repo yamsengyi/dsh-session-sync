@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { apply, initFolder } from '../index.js'
 import { createHubServer } from '../src/hub-server.js'
+import { SyncClient } from '../src/sync-client.js'
 
 const quiet = { info() {}, warn() {}, error() {}, log() {} }
 
@@ -368,6 +369,126 @@ test('the sync command initializes a hub, pairs, and starts syncing', async (t) 
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
   assert.equal(head, 2)
+})
+
+/** A Cordis-shaped context that also captures the Settings HTTP routes. */
+function routeContext() {
+  const ctx = fakeContext()
+  const routes = new Map()
+  ctx.webServer = {
+    register(route) {
+      routes.set(route.path, route)
+      return () => routes.delete(route.path)
+    },
+  }
+  ctx.connection = {
+    requestRejection: () => undefined,
+    admit: () => ({ peer: { principal: {} } }),
+  }
+  ctx.workspaceRegistry = {
+    list: () => [],
+    resolveByPath: async () => undefined,
+    create: async (path) => ({ id: `ws-${path}`, path }),
+  }
+  return { ctx, routes }
+}
+
+function captureResponse() {
+  let finish
+  const done = new Promise((resolve) => { finish = resolve })
+  return {
+    statusCode: 0,
+    headers: {},
+    body: undefined,
+    setHeader(name, value) { this.headers[name.toLowerCase()] = value },
+    end(body) { this.body = body; finish() },
+    done,
+  }
+}
+
+function routeRequest(method, body) {
+  return {
+    method,
+    headers: {},
+    url: '/session-sync/api/test',
+    async *[Symbol.asyncIterator]() {
+      if (body !== undefined) yield Buffer.from(JSON.stringify(body))
+    },
+  }
+}
+
+async function invoke(routes, path, method, body) {
+  const res = captureResponse()
+  routes.get(path).handler(routeRequest(method, body), res)
+  await res.done
+  return { status: res.statusCode, json: res.body ? JSON.parse(res.body) : undefined }
+}
+
+test('children mode refuses to mark the shared-root container but marks a child project', async (t) => {
+  const dataDir = await mkdtemp(join(tmpdir(), 'dsh-sync-container-'))
+  const container = await mkdtemp(join(tmpdir(), 'dsh-sync-root-'))
+  const child = join(container, 'proj-a')
+  await mkdir(child, { recursive: true })
+  const { ctx, routes } = routeContext()
+  t.after(async () => {
+    ctx.dispose()
+    await rm(dataDir, { recursive: true, force: true })
+    await rm(container, { recursive: true, force: true })
+  })
+
+  await apply(ctx, {
+    role: 'client',
+    hubUrl: 'http://127.0.0.1:1',
+    token: 'tok-x',
+    dataDir,
+    defaultWorkspace: container,
+    defaultWorkspaceMode: 'children',
+    autoPush: false,
+    autoCheckpoint: false,
+  })
+
+  const containerRes = await invoke(routes, '/session-sync/api/workspace', 'POST', { path: container })
+  assert.equal(containerRes.status, 400)
+  assert.equal(containerRes.json.error.code, 'container-not-project')
+
+  const childRes = await invoke(routes, '/session-sync/api/workspace', 'POST', { path: child })
+  assert.equal(childRes.status, 200)
+  assert.ok(childRes.json.folderId)
+})
+
+test('projects/sync pulls a hub checkpoint into a marked local folder', async (t) => {
+  const dataDir = await mkdtemp(join(tmpdir(), 'dsh-sync-projsync-'))
+  const source = await mkdtemp(join(tmpdir(), 'dsh-sync-src-'))
+  const target = await mkdtemp(join(tmpdir(), 'dsh-sync-dst-'))
+  await writeFile(join(source, 'note.txt'), 'from hub\n')
+  const hub = await createHubServer({ dataDir: join(dataDir, 'hub'), port: 0, tokens: [{ name: 'ps', token: 'tok-ps' }], logger: quiet })
+  const seeder = new SyncClient({ baseUrl: hub.url, token: 'tok-ps', logger: quiet })
+  await seeder.pushCheckpoint('join-sync', source, { name: 'join-sync' })
+  await initFolder(target, 'join-sync')
+
+  const { ctx, routes } = routeContext()
+  t.after(async () => {
+    ctx.dispose()
+    await hub.close()
+    await rm(dataDir, { recursive: true, force: true })
+    await rm(source, { recursive: true, force: true })
+    await rm(target, { recursive: true, force: true })
+  })
+
+  await apply(ctx, {
+    role: 'client',
+    hubUrl: hub.url,
+    token: 'tok-ps',
+    dataDir,
+    defaultWorkspaceMode: 'off',
+    autoPush: false,
+    autoCheckpoint: false,
+  })
+
+  const res = await invoke(routes, '/session-sync/api/projects/sync', 'POST', { folderId: 'join-sync', path: target })
+  assert.equal(res.status, 200)
+  assert.equal(res.json.pulled.changed, true)
+  assert.equal(await readFile(join(target, 'note.txt'), 'utf8'), 'from hub\n')
 })
 
 

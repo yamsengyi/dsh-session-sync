@@ -44,6 +44,9 @@ window.__ModuleLoader__.load({
         'projects.sessionServer': 'On server',
         'projects.sessionsEmpty': 'No sessions on the server.',
         'projects.sessionsHint': 'The hub stores session history; it is not imported into local DSH sessions.',
+        'projects.syncAction': 'Sync',
+        'projects.syncing': 'Syncing…',
+        'projects.syncDone': 'Synced to v{version}',
         'projects.join': 'Import',
         'projects.savePath': 'Save path',
         'projects.changePath': 'Change path',
@@ -134,6 +137,7 @@ window.__ModuleLoader__.load({
         'error.no-workspace': 'Share a project first.',
         'error.no-marker': 'Project is not shared for sync.',
         'error.not-marked': 'Project is not shared for sync.',
+        'error.container-not-project': 'The shared root is a container. Share a project folder inside it.',
         'error.client-inactive': 'Client mode is not active; pair first.',
         'error.hub-inactive': 'Host mode is not running.',
       },
@@ -158,6 +162,9 @@ window.__ModuleLoader__.load({
         'projects.sessionServer': '在服务器上',
         'projects.sessionsEmpty': '服务器上没有会话。',
         'projects.sessionsHint': '中枢保存会话历史；不会导入到本地 DSH 会话。',
+        'projects.syncAction': '同步',
+        'projects.syncing': '同步中…',
+        'projects.syncDone': '已同步到 v{version}',
         'projects.join': '导入',
         'projects.savePath': '保存路径',
         'projects.changePath': '更改路径',
@@ -248,6 +255,7 @@ window.__ModuleLoader__.load({
         'error.no-workspace': '请先共享项目。',
         'error.no-marker': '该项目尚未标记为同步。',
         'error.not-marked': '该项目未标记为同步。',
+        'error.container-not-project': '共享根目录是容器。请共享其中的项目文件夹。',
         'error.client-inactive': '客户端模式未启用；请先配对。',
         'error.hub-inactive': '主机模式未运行。',
       },
@@ -272,6 +280,9 @@ window.__ModuleLoader__.load({
         'projects.sessionServer': '서버에 있음',
         'projects.sessionsEmpty': '서버에 세션이 없습니다.',
         'projects.sessionsHint': '세션 이력은 허브에 저장되며 로컬 DSH 세션으로 가져오지 않습니다.',
+        'projects.syncAction': '동기화',
+        'projects.syncing': '동기화 중…',
+        'projects.syncDone': 'v{version}(으)로 동기화됨',
         'projects.join': '가져오기',
         'projects.savePath': '저장 경로',
         'projects.changePath': '경로 변경',
@@ -362,6 +373,7 @@ window.__ModuleLoader__.load({
         'error.no-workspace': '먼저 프로젝트를 공유하세요.',
         'error.no-marker': '프로젝트가 동기화 대상으로 지정되지 않았습니다.',
         'error.not-marked': '프로젝트가 동기화 대상이 아닙니다.',
+        'error.container-not-project': '공유 루트는 컨테이너입니다. 그 안의 프로젝트 폴더를 공유하세요.',
         'error.client-inactive': '클라이언트 모드가 아닙니다. 먼저 페어링하세요.',
         'error.hub-inactive': '호스트 모드가 실행 중이 아닙니다.',
       },
@@ -763,6 +775,8 @@ window.__ModuleLoader__.load({
       const [joinPath, setJoinPath] = useState('')
       const [editingPath, setEditingPath] = useState(false)
       const [joining, setJoining] = useState(false)
+      const [syncingKey, setSyncingKey] = useState('')
+      const [syncNotice, setSyncNotice] = useState('')
       const lang = readLanguage() === 'auto' ? detectLanguage() : readLanguage()
       const tr = (key, params) => translate(lang, key, params)
 
@@ -777,6 +791,7 @@ window.__ModuleLoader__.load({
         setHubSessions([])
         setTab('projects')
         setJoinProject(null)
+        setSyncNotice('')
         void call('status').then((data) => {
           if (alive) setStatus(data)
         }).catch((reason) => {
@@ -843,6 +858,33 @@ window.__ModuleLoader__.load({
         }
       }
 
+      const refreshHub = async () => {
+        try {
+          const [projects, nextStatus] = await Promise.all([call('projects'), call('status')])
+          setHubProjects(Array.isArray(projects?.projects) ? projects.projects : [])
+          setStatus(nextStatus)
+        } catch {
+          // Keep the current view if the refresh fails; the sync result still shows.
+        }
+      }
+
+      const syncExisting = async (item) => {
+        if (!item.hub || !item.local || syncingKey) return
+        setSyncingKey(item.key)
+        setSyncNotice('')
+        setError('')
+        try {
+          const result = await call('projects/sync', { folderId: item.hub.id, path: item.local.path })
+          const version = result?.pulled?.version
+          setSyncNotice(tr('projects.syncDone', { version: version ?? '-' }))
+          await refreshHub()
+        } catch (reason) {
+          setError(String(reason?.message ?? reason))
+        } finally {
+          setSyncingKey('')
+        }
+      }
+
       const known = status?.knownWorkspaces ?? []
       const hubById = new Map(hubProjects.map((project) => [project.id, project]))
       const localByFolder = new Map()
@@ -874,7 +916,13 @@ window.__ModuleLoader__.load({
             type: 'button',
             style: projectStyles.button,
             onClick: () => selectProject(hub),
-          }, tr('projects.join')) : null)
+          }, tr('projects.join')) : null,
+          hub && local ? h('button', {
+            type: 'button',
+            style: projectStyles.button,
+            disabled: Boolean(syncingKey),
+            onClick: () => syncExisting(item),
+          }, syncingKey === item.key ? tr('projects.syncing') : tr('projects.syncAction')) : null)
       }
 
       const sessionRow = (session) => {
@@ -921,6 +969,7 @@ window.__ModuleLoader__.load({
               onClick: () => setOpen(false),
             }, tr('projects.close'))),
           error ? h('p', { style: projectStyles.hint }, error) : null,
+          syncNotice ? h('p', { style: projectStyles.hint }, syncNotice) : null,
           !joinProject ? h('div', { style: projectStyles.tabs },
             h('button', {
               type: 'button',
@@ -1032,7 +1081,8 @@ window.__ModuleLoader__.load({
           setTarget(next.client.hubUrl ?? hostUrl(next))
           setCode(next.hub.pairingCode ?? '')
           setName(next.client.deviceName ?? '')
-          setWorkspace(next.workspace.path || next.defaultWorkspace || '')
+          const firstShared = next.knownWorkspaces?.find((ws) => ws.shared)?.path
+          setWorkspace(next.workspace.path || firstShared || next.defaultWorkspace || '')
           setInitialized(true)
         }
         return next

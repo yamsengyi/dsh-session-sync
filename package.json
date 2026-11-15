@@ -1,6 +1,6 @@
 {
   "name": "@yamsengyi/dsh-session-sync",
-  "version": "0.9.6",
+  "version": "0.9.7",
   "private": true,
   "type": "module",
   "description": "Personal sync hub for DSH sessions and workspace snapshots",

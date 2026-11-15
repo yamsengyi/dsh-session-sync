@@ -881,6 +881,32 @@ export async function apply(ctx, raw) {
     return readStatus()
   }
 
+  const sessionInfo = async (body) => {
+    const sessionId = String(body?.sessionId ?? '').trim()
+    if (!sessionId) throw new SyncHttpError(400, 'invalid-session', 'session id is required')
+    let info
+    try {
+      info = await ctx.sessionPersistence.stat(sessionId)
+    } catch {
+      throw new SyncHttpError(404, 'session-not-found', 'session not found')
+    }
+    const cwd = typeof info?.header?.cwd === 'string' ? info.header.cwd : null
+    let marker
+    if (cwd) {
+      try {
+        marker = await readMarker(cwd)
+      } catch {
+        marker = undefined
+      }
+    }
+    return {
+      sessionId,
+      cwd,
+      shared: Boolean(marker),
+      folderId: marker?.folderId ?? null,
+    }
+  }
+
   const pushWorkspaceSessions = async (client, workspacePath) => {
     if (!workspacePath) return { scanned: 0, pushed: 0, events: 0, errors: 0 }
     const normalizePath = (value) => String(value ?? '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
@@ -999,6 +1025,7 @@ export async function apply(ctx, raw) {
         unpair: unpairClient,
         markWorkspace,
         unmarkWorkspace,
+        sessionInfo,
         syncNow,
         code: issueCode,
         checkUpdate,

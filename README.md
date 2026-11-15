@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.6.0` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.7.0` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -70,15 +70,14 @@ After reloading DSH, open **Settings → Session sync**:
 - **Client settings** — target URL in one line, fill it from the local host
   settings, enter the pairing code and device name, then pair or unpair.
 - **Workspace** (Host/Client) — type a path or fill it from the current session,
-  then mark the folder (`.dsh-sync.json`). Known workspaces are listed with a
-  **공유중(동기화중)** or **공유하지 않음** badge. The list is built from saved
-  DSH workspaces plus the configured default and current selection, not from
-  arbitrary session working directories. **동기화 해제** removes the marker
-  without deleting workspace files or hub checkpoints; the `.dsh-sync` state is
-  kept so re-marking can resume from the old base. With no saved selection the
-  path defaults to `~\Documents\deepseek-harness\sync-default`, which the plugin
-  creates as an empty folder; override it with `defaultWorkspace` in the bundle
-  config.
+  then mark the folder (`.dsh-sync.json`). The project list is split into
+  **공유 프로젝트** and **로컬 프로젝트**, with the state badge on each row; left
+  sidebar session rows also carry a small **공유/로컬** badge. **동기화 해제**
+  removes the marker without deleting workspace files or hub checkpoints; the
+  `.dsh-sync` state is kept so re-marking can resume from the old base. With no
+  saved selection the path defaults to
+  `~\Documents\deepseek-harness\sync-default`, which the plugin creates as an
+  empty folder; override it with `defaultWorkspace` in the bundle config.
 - **Sync now** (Host/Client) — pull the hub's newest checkpoint, upload the
   existing sessions whose working directory is the marked workspace, then push
   the workspace's current state, with a result summary.

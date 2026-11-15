@@ -87,7 +87,7 @@ sync**. It controls the same markers the commands write:
 | Mode (Host / Client / Off) + Apply | Host writes `hub.json`; Client writes `client.json`; Off disables both. The other role's settings and token are preserved |
 | Host port + bind | updates `hub.json`, starts/stops the hub, shows the pairing code, and maintains the automatic host-self uploader |
 | Client target URL + code + name | pairs against a hub, writes `client.json`, starts/stops the external client |
-| Workspace path + current session (Host/Client) | writes `.dsh-sync.json` into the chosen folder; the list is built from saved DSH workspaces plus the configured default and current selection (not arbitrary session cwds), and marks each row 공유중(동기화중) or 공유하지 않음. **동기화 해제** removes only the marker; workspace files and hub checkpoints stay, and `.dsh-sync` is kept for an incremental re-mark. The unset default is `~\Documents\deepseek-harness\sync-default`, created empty on load |
+| Workspace path + current session (Host/Client) | writes `.dsh-sync.json` into the chosen folder; the project list is split into 공유 프로젝트 and 로컬 프로젝트, each row carries the state badge, and left-sidebar session rows carry a small 공유/로컬 badge. The source is saved DSH workspaces plus the configured default and current selection, not arbitrary session cwds. **동기화 해제** removes only the marker; workspace files and hub checkpoints stay, and `.dsh-sync` is kept for an incremental re-mark. The unset default is `~\Documents\deepseek-harness\sync-default`, created empty on load |
 | Sync now (Host/Client) | pulls the hub's newest checkpoint, uploads existing sessions for the marked workspace, then pushes the local workspace |
 
 The mode selection is a draft; **Apply** commits it, and the current running
@@ -96,10 +96,16 @@ its own. Host mode starts the hub and its automatic self-uploader together; the
 status line reads `Host running (self-sync)` while both are active.
 
 The page calls exact Host routes under `/session-sync/api/...`
-(`status`, `mode`, `pair`, `unpair`, `workspace`, `sync`, `code`). Connection
-checks the Host/Origin fence and browser Peer on every route. The section needs
-the Web carrier and the `connection` service; a headless composition without
-them simply has no page.
+(`status`, `mode`, `pair`, `unpair`, `workspace`, `workspace/unmark`, `session`,
+`sync`, `code`, `update`). Connection checks the Host/Origin fence and browser
+Peer on every route. The section needs the Web carrier and the `connection`
+service; a headless composition without them simply has no page.
+
+The client half also registers `sidebar.session.row.trailing` as a small
+`공유`/`로컬` badge. The slot is owned by the workspace UI; it is a per-session
+decoration, not a re-grouping of the built-in Workspaces list. DSH exposes no
+per-workspace row slot, so the Settings project groups are the supported way to
+separate shared and local projects.
 
 Mode switches use the marker files, so they require `role: auto` (the bundle
 default). An explicit `role: hub` or `role: client` override in a profile patch

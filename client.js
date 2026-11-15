@@ -27,6 +27,10 @@ window.__ModuleLoader__.load({
         intro: 'Sync DSH sessions and workspace checkpoints with a personal hub.',
         language: 'Language',
         auto: 'Auto (DSH)',
+        'badge.shared': 'Shared',
+        'badge.local': 'Local',
+        'projects.shared': 'Shared projects',
+        'projects.local': 'Local projects',
         'mode.host': 'Host',
         'mode.client': 'Client',
         'mode.both': 'Both',
@@ -103,6 +107,10 @@ window.__ModuleLoader__.load({
         intro: '将 DSH 会话和工作区检查点同步到个人中枢。',
         language: '语言',
         auto: '自动（DSH）',
+        'badge.shared': '共享',
+        'badge.local': '本地',
+        'projects.shared': '共享项目',
+        'projects.local': '本地项目',
         'mode.host': '主机',
         'mode.client': '客户端',
         'mode.both': '两者',
@@ -179,6 +187,10 @@ window.__ModuleLoader__.load({
         intro: 'DSH 세션과 워크스페이스 체크포인트를 개인 허브와 동기화합니다.',
         language: '언어',
         auto: '자동(DSH)',
+        'badge.shared': '공유',
+        'badge.local': '로컬',
+        'projects.shared': '공유 프로젝트',
+        'projects.local': '로컬 프로젝트',
         'mode.host': '호스트',
         'mode.client': '클라이언트',
         'mode.both': '둘 다',
@@ -375,6 +387,9 @@ window.__ModuleLoader__.load({
       hint: { margin: 0, fontSize: 12, opacity: 0.65 },
       updateAvailable: { margin: 0, fontSize: 12, color: '#d08a2e' },
       workspaceList: { display: 'flex', flexDirection: 'column', gap: 4, marginTop: 2 },
+      workspaceGroups: { display: 'flex', flexDirection: 'column', gap: 8, marginTop: 2 },
+      workspaceGroup: { display: 'flex', flexDirection: 'column', gap: 4 },
+      groupHeading: { fontSize: 11, fontWeight: 600, opacity: 0.6, letterSpacing: 0.2 },
       workspaceRow,
       workspaceRowActive: {
         ...workspaceRow,
@@ -407,6 +422,49 @@ window.__ModuleLoader__.load({
       return h('label', { style: styles.fieldRow },
         h('span', { style: styles.label }, label),
         input)
+    }
+
+    const badgeCache = new Map()
+
+    /** A small shared/local marker on a left-sidebar session row. */
+    function SessionBadge({ sessionId }) {
+      const [info, setInfo] = useState(() => (sessionId ? badgeCache.get(sessionId) ?? null : null))
+      useEffect(() => {
+        if (!sessionId) return undefined
+        if (badgeCache.has(sessionId)) {
+          setInfo(badgeCache.get(sessionId))
+          return undefined
+        }
+        let alive = true
+        void call('session', { sessionId }).then((data) => {
+          badgeCache.set(sessionId, data)
+          if (alive) setInfo(data)
+        }).catch(() => {
+          badgeCache.set(sessionId, null)
+        })
+        return () => {
+          alive = false
+        }
+      }, [sessionId])
+      if (!info?.cwd) return null
+      const shared = Boolean(info.shared)
+      return h('span', {
+        title: info.cwd,
+        style: {
+          display: 'inline-block',
+          marginLeft: 4,
+          padding: '0 4px',
+          borderRadius: 3,
+          fontSize: 10,
+          lineHeight: '14px',
+          whiteSpace: 'nowrap',
+          color: shared ? '#7fd39a' : '#9aa0a6',
+          background: shared ? 'rgba(60,154,95,0.18)' : 'rgba(127,127,127,0.12)',
+        },
+      }, translate(
+        readLanguage() === 'auto' ? detectLanguage() : readLanguage(),
+        shared ? 'badge.shared' : 'badge.local',
+      ))
     }
 
     function SessionSyncSection() {
@@ -548,6 +606,17 @@ window.__ModuleLoader__.load({
       const lastSessions = last
         ? `${last.sessions?.pushed ?? 0}${last.sessions?.errors ? ` ${t('sync.errors', { count: last.sessions.errors })}` : ''}`
         : ''
+      const sharedProjects = status?.knownWorkspaces?.filter((ws) => ws.shared) ?? []
+      const localProjects = status?.knownWorkspaces?.filter((ws) => !ws.shared) ?? []
+      const projectRow = (ws) => h('button', {
+        key: ws.path,
+        type: 'button',
+        style: ws.path === workspace ? styles.workspaceRowActive : styles.workspaceRow,
+        onClick: () => setWorkspace(ws.path),
+      },
+        h('span', { style: styles.workspacePath }, ws.path),
+        h('span', { style: ws.shared ? styles.sharedBadge : styles.localBadge },
+          ws.shared ? t('workspace.badgeShared') : t('workspace.badgeLocal')))
 
       return h('div', { style: styles.root },
         h('div', { style: styles.titleRow },
@@ -652,18 +721,14 @@ window.__ModuleLoader__.load({
             status?.workspace?.marked
               ? t('workspace.shared', { folderId: status.workspace.folderId })
               : t('workspace.local')),
-          status?.knownWorkspaces?.length ? h('div', { style: styles.workspaceList },
-            h('span', { style: styles.label }, t('workspace.list')),
-            status.knownWorkspaces.map((ws) => h('button', {
-              key: ws.path,
-              type: 'button',
-              style: ws.path === workspace ? styles.workspaceRowActive : styles.workspaceRow,
-              onClick: () => setWorkspace(ws.path),
-            },
-              h('span', { style: styles.workspacePath }, ws.path),
-              h('span', { style: ws.shared ? styles.sharedBadge : styles.localBadge },
-                ws.shared ? t('workspace.badgeShared') : t('workspace.badgeLocal')),
-            ))) : null,
+          status?.knownWorkspaces?.length ? h('div', { style: styles.workspaceGroups },
+            sharedProjects.length ? h('div', { style: styles.workspaceGroup },
+              h('span', { style: styles.groupHeading }, t('projects.shared')),
+              sharedProjects.map(projectRow)) : null,
+            localProjects.length ? h('div', { style: styles.workspaceGroup },
+              h('span', { style: styles.groupHeading }, t('projects.local')),
+              localProjects.map(projectRow)) : null,
+          ) : null,
         ) : null,
 
         showSync ? h('section', { style: styles.section },
@@ -705,6 +770,11 @@ window.__ModuleLoader__.load({
           order: 40,
           label: 'Session sync',
         }, SessionSyncSection))
+        ctx.slots.inject('sidebar.session.row.trailing', () => ctx.slots.register({
+          name: 'sidebar.session.row.trailing',
+          id: 'session-sync-badge',
+          order: 500,
+        }, SessionBadge))
       },
     }
   },

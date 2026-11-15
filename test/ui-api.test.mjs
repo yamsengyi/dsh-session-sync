@@ -52,6 +52,7 @@ function baseHandlers(overrides = {}) {
     unpair: async () => ({ paired: false }),
     markWorkspace: async (body) => ({ workspace: body }),
     unmarkWorkspace: async (body) => ({ unmarked: body }),
+    sessionInfo: async (body) => ({ session: body }),
     syncNow: async () => ({ synced: true }),
     code: async (body) => ({ code: body?.rotate ? 'ROTATED' : 'CODE' }),
     checkUpdate: async (body) => ({ update: body }),
@@ -115,10 +116,11 @@ test('trust rejection and admission rejection stop before the handler', async ()
 
 test('disposing the routes removes every registration', () => {
   const { routes, dispose } = harness(baseHandlers())
-  assert.equal(routes.size, 9)
+  assert.equal(routes.size, 10)
   dispose()
   assert.equal(routes.size, 0)
 })
+
 
 
 

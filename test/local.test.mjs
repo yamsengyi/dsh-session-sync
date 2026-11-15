@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { createHubServer } from '../src/hub-server.js'
 import { SyncClient, readBase, safeJoin } from '../src/sync-client.js'
+import { initFolder } from '../index.js'
 
 const quiet = { info() {}, warn() {}, error() {}, log() {} }
 
@@ -181,4 +182,31 @@ test('safeJoin refuses paths that escape the workspace', () => {
   assert.throws(() => safeJoin('C:/ws', '../x'))
   assert.throws(() => safeJoin('C:/ws', 'a/../../x'))
   assert.equal(safeJoin('C:/ws', 'a/b.txt'), join('C:/ws', 'a', 'b.txt'))
+})
+
+test('a different local path can join an existing hub folderId', async () => {
+  const hub = await createHubServer({
+    dataDir: await mkdtemp(join(tmpdir(), 'dsh-sync-join-hub-')),
+    port: 0,
+    tokens: [{ name: 'join', token: 'tok-join' }],
+    logger: quiet,
+  })
+  const rootA = await makeWorkspace({ 'hello.txt': 'from A\n' })
+  const rootB = await mkdtemp(join(tmpdir(), 'dsh-sync-join-b-'))
+  try {
+    const client = new SyncClient({ baseUrl: hub.url, token: 'tok-join', logger: quiet })
+    const folderId = 'join-demo'
+    await client.pushCheckpoint(folderId, rootA, { name: 'demo' })
+    await initFolder(rootB, folderId)
+    await client.pullCheckpoint(folderId, rootB)
+    assert.equal(await readFile(join(rootB, 'hello.txt'), 'utf8'), 'from A\n')
+
+    const folders = await client.folders()
+    assert.equal(folders.folders.find((folder) => folder.id === folderId)?.name, 'demo')
+  } finally {
+    await hub.close()
+    await rm(rootA, { recursive: true, force: true })
+    await rm(rootB, { recursive: true, force: true })
+    await rm(hub.store.dataDir, { recursive: true, force: true })
+  }
 })

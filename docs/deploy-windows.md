@@ -13,14 +13,10 @@ The server must have DSH running for the hub to be reachable.
 
 ## 1. Server setup
 
-1. Put the bundle under the DSH home, not a drive root, so the current user
-   owns it:
-   ```
-   %USERPROFILE%\.dsh\bundles\dsh-sync
-   ```
-2. Install it into that machine's DSH profile:
-   - **Plugins → Add plugin → local directory**, or
-   - the server DSH agent runs `plugin_manager install_bundle` with that path.
+1. Install the bundle: **Plugins → Add plugin**, paste
+   `https://github.com/yamsengyi/dsh-sync`, and leave the Registry dropdown at
+   its default (a GitHub URL bypasses the npm registry).
+2. Reload DSH once so the plugin code and the `/sync` command load.
 3. In DSH, run:
 
 ```text
@@ -36,10 +32,10 @@ are needed.
 - For direct LAN access without a proxy, use `/sync init-hub 0.0.0.0 8787` and
   allow TCP 8787 on the Private profile.
 
-CLI fallback for automation:
+CLI fallback for automation, using the installed package:
 
 ```powershell
-node "$env:USERPROFILE\.dsh\bundles\dsh-sync\bin\dsh-sync.mjs" init-hub
+node "$env:DSH_PROFILE_DIR\node_modules\@local\dsh-sync\bin\dsh-sync.mjs" init-hub
 ```
 
 On later DSH starts the plugin reads `hub.json` and starts the hub
@@ -54,8 +50,7 @@ Get-NetTCPConnection -LocalPort 8787 | Select-Object LocalAddress,State
 
 ## 2. Client setup
 
-1. Put the same bundle under `%USERPROFILE%\.dsh\bundles\dsh-sync` on the
-   client and install it.
+1. Install the same GitHub URL on the client and reload DSH once.
 2. In DSH, pair once:
 
 ```text
@@ -70,7 +65,7 @@ plugin reads `client.json` and resumes.
 CLI fallback:
 
 ```powershell
-node "$env:USERPROFILE\.dsh\bundles\dsh-sync\bin\dsh-sync.mjs" pair `
+node "$env:DSH_PROFILE_DIR\node_modules\@local\dsh-sync\bin\dsh-sync.mjs" pair `
   --hub https://sync.example.com `
   --code XXXX-XXXX `
   --name laptop
@@ -79,7 +74,7 @@ node "$env:USERPROFILE\.dsh\bundles\dsh-sync\bin\dsh-sync.mjs" pair `
 Check either side with `/sync status` or:
 
 ```powershell
-node "$env:USERPROFILE\.dsh\bundles\dsh-sync\bin\dsh-sync.mjs" status
+node "$env:DSH_PROFILE_DIR\node_modules\@local\dsh-sync\bin\dsh-sync.mjs" status
 ```
 
 
@@ -178,9 +173,11 @@ Compress-Archive -Path $src -DestinationPath "D:\backup\dsh-sync-$(Get-Date -For
 
 ## 5. Updates
 
-1. Replace the bundle directory (`%USERPROFILE%\.dsh\bundles\dsh-sync`) with the new version.
-2. Stop and start DSH (the linked install picks up new files on restart).
-3. The data directory is untouched; protocol stays v1.
+1. Push the new commit (and a tag) to `https://github.com/yamsengyi/dsh-sync`.
+2. On each machine, use the bundle's **Update** action, or uninstall and install
+   the GitHub URL again.
+3. Restart DSH to load the new module generation; restart is not needed for a
+   data-only change. The data directory is untouched and the protocol stays v1.
 
 ## 6. Troubleshooting
 
@@ -189,9 +186,9 @@ Compress-Archive -Path $src -DestinationPath "D:\backup\dsh-sync-$(Get-Date -For
 | No listener on 8787 | `hub.json` exists, DSH started, port not already used, bind host is a local address |
 | Client cannot reach the hub | Tunnel/Caddy status, DNS, firewall, network profile (Public blocks inbound) |
 | `401 unauthorized` | Re-pair; the device token is in `client.json` |
-| `403 pairing-code-invalid` | Read the current code with `node bin\dsh-sync.mjs code`; rotate if leaked |
+| `403 pairing-code-invalid` | `/sync code` on the hub; rotate if leaked |
 | `426 protocol-mismatch` | Hub and client bundle versions differ; update both |
-| Pairing code lost | `node bin\dsh-sync.mjs code --rotate --hub https://... --token <client token>` |
+| Pairing code lost | `/sync code rotate` on the hub (requires a running hub) |
 | Disk growth | `sessions/` grows with turns; prune old sessions at the hub if needed |
 
 ## 7. Security

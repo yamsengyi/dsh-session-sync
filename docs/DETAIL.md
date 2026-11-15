@@ -47,8 +47,9 @@ for the server's DSH agent.
 
 ### Setup
 
-Install the bundle from a directory under the DSH home, for example
-`%USERPROFILE%\.dsh\bundles\dsh-sync`. Then, inside DSH:
+Install it from GitHub: **Plugins → Add plugin**, then paste
+`https://github.com/yamsengyi/dsh-sync` (the Registry dropdown does not apply to
+a GitHub URL). Reload DSH once. Then, inside DSH:
 
 Server, once:
 

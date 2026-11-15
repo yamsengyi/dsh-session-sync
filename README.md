@@ -4,13 +4,23 @@ A DSH bundle that adds a personal sync hub for sessions and workspace
 snapshots. One machine runs DSH and hosts the hub; every other PC installs the
 bundle once, pairs with a code, and then only needs DSH started.
 
+## Install
+
+**Plugins → Add plugin**, then paste:
+
+```
+https://github.com/yamsengyi/dsh-sync
+```
+
+The **Registry** dropdown applies to package-name installs; a GitHub URL
+bypasses it, so leave the dropdown at its default. Pin a release with
+`https://github.com/yamsengyi/dsh-sync#v0.1.0` if you want reproducibility.
+Reload DSH once after installation so the plugin code and `/sync` command load.
+
+For local development you can instead install the checkout by its absolute
+directory path.
+
 ## Quickstart
-
-Put the bundle under the DSH home, not a drive root, so no elevation is needed:
-
-```
-%USERPROFILE%\.dsh\bundles\dsh-sync
-```
 
 Server (the machine that will host the hub), after installing the bundle:
 
@@ -31,8 +41,11 @@ This writes `client.json` and starts syncing immediately. `/sync status` shows
 the current hub/client state, and `/sync code` (or `/sync code rotate`) manages
 the pairing code.
 
-The CLI remains for automation and server handoff:
-`node <bundle>\bin\dsh-sync.mjs init-hub|pair|status|code`.
+CLI fallback for automation, from the installed package:
+
+```powershell
+node "$env:DSH_PROFILE_DIR\node_modules\@local\dsh-sync\bin\dsh-sync.mjs" status
+```
 
 See [docs/deploy-windows.md](docs/deploy-windows.md) for the domain and TLS
 setup, and [docs/handoff.md](docs/handoff.md) to hand the server setup to that

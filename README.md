@@ -109,7 +109,8 @@ in the workspace list even before it is marked. A new empty folder is still the
 safest first-sync target.
 
 [B Settings 그룹 샘플](docs/assets/projects-b-sample.png) ·
-[New session 옆 Projects 진입 샘플](docs/assets/projects-entry-sample.png)
+[New session 옆 Projects 진입 샘플](docs/assets/projects-entry-sample.png) ·
+[Workspace decoration 한계/upstream 요청 메모](docs/workspace-status-decoration.md)
 
 ## Default workspace vs shared workspace
 
@@ -149,7 +150,8 @@ src/sync-client.js        push/pull client used by the plugin and tests
 src/manifest.js           workspace scan, ignore rules, three-way diff
 src/protocol.js           errors, hashing, body and path validation
 test/                     local protocol, plugin, recovery, and pairing tests
-docs/                     protocol, deployment, handoff, plugin detail
+docs/                     protocol, deployment, handoff, plugin detail,
+                          workspace decoration upstream note
 ```
 
 The plugin has no build step and no runtime dependency: a profile-installed

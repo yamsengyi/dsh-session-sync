@@ -31,6 +31,9 @@ window.__ModuleLoader__.load({
         'badge.local': 'Local',
         'projects.shared': 'Shared projects',
         'projects.local': 'Local projects',
+        'projects.title': 'Projects',
+        'projects.close': 'Close',
+        'projects.empty': 'No saved projects',
         'mode.host': 'Host',
         'mode.client': 'Client',
         'mode.both': 'Both',
@@ -111,6 +114,9 @@ window.__ModuleLoader__.load({
         'badge.local': '本地',
         'projects.shared': '共享项目',
         'projects.local': '本地项目',
+        'projects.title': '项目',
+        'projects.close': '关闭',
+        'projects.empty': '暂无已保存项目',
         'mode.host': '主机',
         'mode.client': '客户端',
         'mode.both': '两者',
@@ -191,6 +197,9 @@ window.__ModuleLoader__.load({
         'badge.local': '로컬',
         'projects.shared': '공유 프로젝트',
         'projects.local': '로컬 프로젝트',
+        'projects.title': '프로젝트',
+        'projects.close': '닫기',
+        'projects.empty': '저장된 프로젝트가 없습니다',
         'mode.host': '호스트',
         'mode.client': '클라이언트',
         'mode.both': '둘 다',
@@ -465,6 +474,118 @@ window.__ModuleLoader__.load({
         readLanguage() === 'auto' ? detectLanguage() : readLanguage(),
         shared ? 'badge.shared' : 'badge.local',
       ))
+    }
+
+    const projectStyles = {
+      button: {
+        flex: '0 0 auto', height: 28, padding: '0 9px', marginLeft: 6,
+        border: '1px solid rgba(127,127,127,0.35)', borderRadius: 6,
+        background: 'transparent', color: 'inherit', cursor: 'pointer',
+        font: 'inherit', fontSize: 12,
+      },
+      overlay: {
+        position: 'fixed', inset: 0, zIndex: 1000, padding: 20,
+        background: 'rgba(0,0,0,0.55)', display: 'flex',
+        alignItems: 'center', justifyContent: 'center',
+      },
+      modal: {
+        width: 'min(620px, 100%)', maxHeight: '70vh', overflow: 'auto',
+        padding: 16, borderRadius: 12, border: '1px solid rgba(127,127,127,0.35)',
+        background: '#232529', color: '#e8e9ec',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+        display: 'flex', flexDirection: 'column', gap: 10,
+      },
+      header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+      title: { margin: 0, fontSize: 16, fontWeight: 600 },
+      close: {
+        border: '1px solid rgba(127,127,127,0.35)', borderRadius: 6,
+        background: 'transparent', color: 'inherit', cursor: 'pointer',
+        padding: '3px 8px', fontSize: 12,
+      },
+      group: { display: 'flex', flexDirection: 'column', gap: 4 },
+      heading: { fontSize: 11, fontWeight: 600, opacity: 0.6 },
+      row: { display: 'flex', alignItems: 'center', gap: 8, padding: '5px 7px', borderRadius: 6, background: 'rgba(127,127,127,0.08)' },
+      path: { flex: '1 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 12, fontFamily: 'ui-monospace, monospace' },
+      shared: { flex: '0 0 auto', fontSize: 10, padding: '1px 5px', borderRadius: 3, color: '#7fd39a', background: 'rgba(60,154,95,0.18)' },
+      local: { flex: '0 0 auto', fontSize: 10, padding: '1px 5px', borderRadius: 3, color: '#9aa0a6', background: 'rgba(127,127,127,0.12)' },
+      hint: { margin: 0, fontSize: 12, opacity: 0.7 },
+    }
+
+    /** Projects button beside New session, with a grouped modal. */
+    function ProjectsAction({ wide, children }) {
+      const [open, setOpen] = useState(false)
+      const [status, setStatus] = useState(null)
+      const [error, setError] = useState('')
+      const lang = readLanguage() === 'auto' ? detectLanguage() : readLanguage()
+      const tr = (key) => translate(lang, key)
+
+      useEffect(() => {
+        if (!open) return undefined
+        let alive = true
+        setStatus(null)
+        setError('')
+        void call('status').then((data) => {
+          if (alive) setStatus(data)
+        }).catch((reason) => {
+          if (alive) setError(String(reason?.message ?? reason))
+        })
+        const onKey = (event) => {
+          if (event.key === 'Escape') setOpen(false)
+        }
+        window.addEventListener('keydown', onKey)
+        return () => {
+          alive = false
+          window.removeEventListener('keydown', onKey)
+        }
+      }, [open])
+
+      const shared = status?.knownWorkspaces?.filter((ws) => ws.shared) ?? []
+      const local = status?.knownWorkspaces?.filter((ws) => !ws.shared) ?? []
+      const row = (ws) => h('div', { key: ws.path, style: projectStyles.row },
+        h('span', { style: projectStyles.path, title: ws.path }, ws.path),
+        h('span', { style: ws.shared ? projectStyles.shared : projectStyles.local },
+          ws.shared ? tr('workspace.badgeShared') : tr('workspace.badgeLocal')))
+
+      return h(React.Fragment, null,
+        children,
+        h('button', {
+          type: 'button',
+          style: projectStyles.button,
+          title: tr('projects.title'),
+          'aria-label': tr('projects.title'),
+          onClick: (event) => {
+            event.stopPropagation()
+            setOpen(true)
+          },
+        }, wide ? tr('projects.title') : '▦'),
+        open ? h('div', {
+          style: projectStyles.overlay,
+          onClick: () => setOpen(false),
+        }, h('div', {
+          style: projectStyles.modal,
+          role: 'dialog',
+          'aria-modal': 'true',
+          'aria-label': tr('projects.title'),
+          onClick: (event) => event.stopPropagation(),
+        },
+          h('div', { style: projectStyles.header },
+            h('h3', { style: projectStyles.title }, tr('projects.title')),
+            h('button', {
+              type: 'button',
+              style: projectStyles.close,
+              onClick: () => setOpen(false),
+            }, tr('projects.close'))),
+          error ? h('p', { style: projectStyles.hint }, error) : null,
+          shared.length ? h('div', { style: projectStyles.group },
+            h('span', { style: projectStyles.heading }, tr('projects.shared')),
+            shared.map(row)) : null,
+          local.length ? h('div', { style: projectStyles.group },
+            h('span', { style: projectStyles.heading }, tr('projects.local')),
+            local.map(row)) : null,
+          !error && status && shared.length === 0 && local.length === 0
+            ? h('p', { style: projectStyles.hint }, tr('projects.empty'))
+            : null,
+        )) : null)
     }
 
     function SessionSyncSection() {
@@ -775,6 +896,10 @@ window.__ModuleLoader__.load({
           id: 'session-sync-badge',
           order: 500,
         }, SessionBadge))
+        ctx.slots.inject('sidebar.session.action', () => ctx.slots.register({
+          name: 'sidebar.session.action',
+          id: 'session-sync-projects',
+        }, ProjectsAction))
       },
     }
   },

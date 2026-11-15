@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.7.0` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.7.1` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -70,12 +70,13 @@ After reloading DSH, open **Settings → Session sync**:
 - **Client settings** — target URL in one line, fill it from the local host
   settings, enter the pairing code and device name, then pair or unpair.
 - **Workspace** (Host/Client) — type a path or fill it from the current session,
-  then mark the folder (`.dsh-sync.json`). The project list is split into
-  **공유 프로젝트** and **로컬 프로젝트**, with the state badge on each row; left
-  sidebar session rows also carry a small **공유/로컬** badge. **동기화 해제**
-  removes the marker without deleting workspace files or hub checkpoints; the
-  `.dsh-sync` state is kept so re-marking can resume from the old base. With no
-  saved selection the path defaults to
+  then mark the folder (`.dsh-sync.json`). A **Projects** button beside the
+  sidebar's New session button opens a modal with **공유 프로젝트** and
+  **로컬 프로젝트** groups; the same groups appear in Settings. Left sidebar
+  session rows also carry a small **공유/로컬** badge. **동기화 해제** removes the
+  marker without deleting workspace files or hub checkpoints; the `.dsh-sync`
+  state is kept so re-marking can resume from the old base. With no saved
+  selection the path defaults to
   `~\Documents\deepseek-harness\sync-default`, which the plugin creates as an
   empty folder; override it with `defaultWorkspace` in the bundle config.
 - **Sync now** (Host/Client) — pull the hub's newest checkpoint, upload the
@@ -106,6 +107,9 @@ The plugin's `defaultWorkspace` config (bundle default
 `~\Documents\deepseek-harness\sync-default`) is created empty on load and appears
 in the workspace list even before it is marked. A new empty folder is still the
 safest first-sync target.
+
+[B Settings 그룹 샘플](docs/assets/projects-b-sample.png) ·
+[New session 옆 Projects 진입 샘플](docs/assets/projects-entry-sample.png)
 
 ## Default workspace vs shared workspace
 

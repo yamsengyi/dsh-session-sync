@@ -102,10 +102,10 @@ Peer on every route. The section needs the Web carrier and the `connection`
 service; a headless composition without them simply has no page.
 
 The client half also registers `sidebar.session.row.trailing` as a small
-`공유`/`로컬` badge. The slot is owned by the workspace UI; it is a per-session
-decoration, not a re-grouping of the built-in Workspaces list. DSH exposes no
-per-workspace row slot, so the Settings project groups are the supported way to
-separate shared and local projects.
+`공유`/`로컬` badge, and `sidebar.session.action` as a **Projects** button beside
+the sidebar's New session row. The button opens a modal with the same
+공유 프로젝트 / 로컬 프로젝트 groups. This is a separate list, not a re-grouping
+of the built-in Workspaces list; DSH exposes no per-workspace row slot.
 
 Mode switches use the marker files, so they require `role: auto` (the bundle
 default). An explicit `role: hub` or `role: client` override in a profile patch

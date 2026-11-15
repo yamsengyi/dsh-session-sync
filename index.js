@@ -564,6 +564,43 @@ export async function apply(ctx, raw) {
     }
   }
 
+  const listKnownWorkspaces = async () => {
+    const seen = new Map()
+    try {
+      const sessions = await ctx.sessionPersistence.list()
+      for (const entry of sessions) {
+        const path = entry.header?.cwd
+        if (typeof path !== 'string' || path.length === 0) continue
+        const item = seen.get(path) ?? { path, sessions: 0, lastAt: 0 }
+        item.sessions += 1
+        item.lastAt = Math.max(item.lastAt, entry.header.createdAt ?? 0)
+        seen.set(path, item)
+      }
+    } catch {
+      // A missing session list just leaves the workspace list empty.
+    }
+    const ui = await readUi()
+    if (ui.workspacePath && !seen.has(ui.workspacePath)) {
+      seen.set(ui.workspacePath, { path: ui.workspacePath, sessions: 0, lastAt: 0 })
+    }
+    const workspaces = []
+    for (const item of seen.values()) {
+      let marker
+      try {
+        marker = await readMarker(item.path)
+      } catch {
+        marker = undefined
+      }
+      workspaces.push({
+        ...item,
+        shared: Boolean(marker),
+        folderId: marker?.folderId ?? null,
+      })
+    }
+    workspaces.sort((a, b) => (b.lastAt - a.lastAt) || a.path.localeCompare(b.path))
+    return workspaces
+  }
+
   const readStatus = async () => {
     const hubConfig = await readJsonIfExists(hubConfigPath)
     const clientConfig = await readJsonIfExists(clientConfigPath)
@@ -622,6 +659,7 @@ export async function apply(ctx, raw) {
         nonEmpty,
       },
       currentPath: await currentPath(),
+      knownWorkspaces: await listKnownWorkspaces(),
       lastSync: ui.lastSync ?? null,
     }
   }

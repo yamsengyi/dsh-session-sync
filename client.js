@@ -53,6 +53,12 @@ window.__ModuleLoader__.load({
     }
 
     const fieldBase = { display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }
+    const workspaceRow = {
+      display: 'flex', gap: 8, alignItems: 'center', padding: '4px 6px',
+      border: '1px solid rgba(127,127,127,0.22)', borderRadius: 6,
+      background: 'transparent', color: 'inherit', cursor: 'pointer',
+      textAlign: 'left', font: 'inherit',
+    }
     const styles = {
       root: { display: 'flex', flexDirection: 'column', gap: 12, padding: '4px 4px 20px', maxWidth: 720 },
       title: { margin: 0, fontSize: 18, fontWeight: 600 },
@@ -77,6 +83,25 @@ window.__ModuleLoader__.load({
       muted: { margin: 0, fontSize: 12, opacity: 0.7 },
       hint: { margin: 0, fontSize: 12, opacity: 0.65 },
       warning: { margin: 0, fontSize: 12, color: '#d08a2e' },
+      workspaceList: { display: 'flex', flexDirection: 'column', gap: 4, marginTop: 2 },
+      workspaceRow,
+      workspaceRowActive: {
+        ...workspaceRow,
+        background: 'rgba(127,127,127,0.15)',
+        borderColor: 'rgba(127,127,127,0.5)',
+      },
+      workspacePath: {
+        flex: '1 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap', fontSize: 12, fontFamily: 'ui-monospace, monospace',
+      },
+      sharedBadge: {
+        flex: '0 0 auto', fontSize: 11, padding: '1px 6px', borderRadius: 4,
+        background: 'rgba(60,154,95,0.18)', color: '#3c9a5f',
+      },
+      localBadge: {
+        flex: '0 0 auto', fontSize: 11, padding: '1px 6px', borderRadius: 4,
+        background: 'rgba(127,127,127,0.15)', opacity: 0.8,
+      },
       error: { margin: 0, fontSize: 12, color: '#d9534f' },
       notice: { margin: 0, fontSize: 12, color: '#3c9a5f' },
     }
@@ -276,13 +301,21 @@ window.__ModuleLoader__.load({
           h('div', { style: styles.buttonRow },
             h('button', { style: styles.smallButton, disabled: Boolean(busy), onClick: useCurrent }, '현재 세션 경로'),
             h('button', { style: styles.button, disabled: Boolean(busy), onClick: mark }, '워크스페이스 지정')),
-          status?.workspace?.marked
-            ? h('p', { style: styles.hint }, `마커: .dsh-sync.json · folderId: ${status.workspace.folderId}`)
-            : null,
-          status?.workspace?.marked && !status.workspace.baseline && status.workspace.nonEmpty
-            ? h('p', { style: styles.warning },
-              '기존 파일이 있고 동기화 기준(base)이 없습니다. 첫 Sync는 로컬에만 있는 파일을 삭제하지 않고, 같은 경로가 다르면 원격본을 .dsh-sync/conflicts에 저장합니다. 빈 폴더를 권장합니다.')
-            : null,
+          h('p', { style: styles.hint },
+            status?.workspace?.marked
+              ? `이 컴퓨터에서 공유 중 · ${status.workspace.folderId}`
+              : '아직 이 컴퓨터의 로컬 폴더입니다.'),
+          status?.knownWorkspaces?.length ? h('div', { style: styles.workspaceList },
+            h('span', { style: styles.label }, '워크스페이스 목록'),
+            status.knownWorkspaces.map((ws) => h('button', {
+              key: ws.path,
+              type: 'button',
+              style: ws.path === workspace ? styles.workspaceRowActive : styles.workspaceRow,
+              onClick: () => setWorkspace(ws.path),
+            },
+              h('span', { style: styles.workspacePath }, ws.path),
+              h('span', { style: ws.shared ? styles.sharedBadge : styles.localBadge }, ws.shared ? '공유' : '로컬'),
+            ))) : null,
         ) : null,
 
         showClient ? h('section', { style: styles.section },

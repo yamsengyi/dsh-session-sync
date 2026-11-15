@@ -671,6 +671,14 @@ export async function apply(ctx, raw) {
       pairedAt: new Date().toISOString(),
     })
     await resolveRoles()
+    const ui = await readUi()
+    if (ui.workspacePath) {
+      try {
+        await pushWorkspaceSessions(runtime.client, ui.workspacePath)
+      } catch {
+        // pushWorkspaceSessions logs per-session failures; pairing still succeeds.
+      }
+    }
     return readStatus()
   }
 
@@ -695,6 +703,50 @@ export async function apply(ctx, raw) {
     return { ...(await readStatus()), folderId }
   }
 
+  const pushWorkspaceSessions = async (client, workspacePath) => {
+    if (!workspacePath) return { scanned: 0, pushed: 0, events: 0, errors: 0 }
+    const normalizePath = (value) => String(value ?? '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
+    let sessions
+    try {
+      sessions = await ctx.sessionPersistence.list()
+    } catch {
+      return { scanned: 0, pushed: 0, events: 0, errors: 0 }
+    }
+    const matching = sessions
+      .filter((entry) => normalizePath(entry.header?.cwd) === normalizePath(workspacePath) && entry.header?.origin !== 'subagent')
+      .sort((a, b) => (b.header.createdAt ?? 0) - (a.header.createdAt ?? 0))
+      .slice(0, 50)
+    let pushed = 0
+    let events = 0
+    let errors = 0
+    for (const entry of matching) {
+      try {
+        const remote = await client.session(entry.header.id)
+        const head = remote?.head ?? 0
+        const handle = await ctx.sessionPersistence.open(entry.header.id, 'read')
+        let slice
+        try {
+          slice = await handle.read(head)
+        } finally {
+          await handle.close()
+        }
+        const pending = slice.events.filter((event) => Number.isInteger(event?.seq) && event.seq >= head)
+        if (pending.length === 0) continue
+        if (pending[0].seq !== head) {
+          errors += 1
+          continue
+        }
+        await client.pushSession({ header: entry.header, events: pending, expectHead: head })
+        pushed += 1
+        events += pending.length
+      } catch (error) {
+        errors += 1
+        logger.warn?.(`[session-sync] session ${entry.header.id} upload failed: ${describe(error)}`)
+      }
+    }
+    return { scanned: matching.length, pushed, events, errors }
+  }
+
   const syncNow = async () => {
     if (!runtime.client) throw new SyncHttpError(409, 'client-inactive', 'client mode is not active; pair first')
     const ui = await readUi()
@@ -708,12 +760,13 @@ export async function apply(ctx, raw) {
     }
     if (!marker) throw new SyncHttpError(409, 'no-marker', 'workspace is not marked for sync')
     const pulled = await runtime.client.pullCheckpoint(marker.folderId, target)
+    const sessions = await pushWorkspaceSessions(runtime.client, target)
     const pushed = await runtime.client.pushCheckpoint(marker.folderId, target, {
       message: 'manual sync',
       author: runtime.deviceName,
     })
-    await updateUi({ lastSync: { at: Date.now(), pulled, pushed } })
-    return { ...(await readStatus()), pushed, pulled }
+    await updateUi({ lastSync: { at: Date.now(), pulled, pushed, sessions } })
+    return { ...(await readStatus()), pushed, pulled, sessions }
   }
 
   const issueCode = async (body) => {

@@ -283,10 +283,10 @@ window.__ModuleLoader__.load({
         showClient ? h('section', { style: styles.section },
           h('h3', { style: styles.heading }, '동기화'),
           h('div', { style: styles.buttonRow },
-            h('button', { style: styles.button, disabled: Boolean(busy) || !status?.client?.running, onClick: syncNow }, '지금 동기화 (Pull + Push)')),
+            h('button', { style: styles.button, disabled: Boolean(busy) || !status?.client?.running, onClick: syncNow }, '지금 동기화 (세션 + 워크스페이스)')),
           last
             ? h('p', { style: styles.hint },
-              `마지막: ${new Date(last.at).toLocaleString()} · pull v${last.pulled?.version ?? '-'} · push v${last.pushed?.version ?? '-'}${last.pushed?.skipped ? ' (변경 없음)' : ''} · 충돌 ${last.pulled?.conflicts?.length ?? 0}`)
+              `마지막: ${new Date(last.at).toLocaleString()} · 세션 ${last.sessions?.pushed ?? 0}개/${last.sessions?.events ?? 0} events${last.sessions?.errors ? ` (오류 ${last.sessions.errors})` : ''} · pull v${last.pulled?.version ?? '-'} · push v${last.pushed?.version ?? '-'}${last.pushed?.skipped ? ' (변경 없음)' : ''} · 충돌 ${last.pulled?.conflicts?.length ?? 0}`)
             : h('p', { style: styles.hint }, '아직 수동 동기화 기록이 없습니다.'),
         ) : null,
 

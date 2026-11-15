@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.4.0` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.4.1` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -67,8 +67,9 @@ After reloading DSH, open **Settings → Session sync**:
   unpair.
 - **Workspace** (Client/Both) — type a path or fill it from the current session,
   then mark the folder (`.dsh-sync.json`).
-- **Sync now** (Client/Both) — pull the hub's newest checkpoint, then push the
-  workspace's current state, with a result summary.
+- **Sync now** (Client/Both) — pull the hub's newest checkpoint, upload the
+  existing sessions whose working directory is the marked workspace, then push
+  the workspace's current state, with a result summary.
 
 Mode changes preserve the other role's configuration and token by writing an
 `enabled` flag into `hub.json` / `client.json`; **Off** leaves both files in

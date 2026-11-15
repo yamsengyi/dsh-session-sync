@@ -85,7 +85,7 @@ sync**. It controls the same markers the commands write:
 | Host port + bind (Host/Both) | updates `hub.json` and starts/stops the hub; shows the pairing code |
 | Client target URL + code + name (Client/Both) | pairs against a hub, writes `client.json`, starts/stops the client |
 | Workspace path + current session (Client/Both) | writes `.dsh-sync.json` into the chosen folder |
-| Sync now (Client/Both) | pulls the hub's newest checkpoint, then pushes the local workspace |
+| Sync now (Client/Both) | pulls the hub's newest checkpoint, uploads existing sessions for the marked workspace, then pushes the local workspace |
 
 The mode selection is a draft; **Apply** commits it, and the current running
 state is shown beside the selector so a toggle never starts or stops the hub on

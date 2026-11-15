@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.9.1` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.9.2` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 

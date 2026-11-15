@@ -16,7 +16,7 @@ window.__ModuleLoader__.load({
   factory(require) {
     const React = require('react')
     const h = React.createElement
-    const { useEffect, useState } = React
+    const { useEffect, useState, useRef } = React
 
     const API = 'session-sync/api/'
     const LOCALE_KEY = 'dsh-session-sync.locale'
@@ -438,10 +438,26 @@ window.__ModuleLoader__.load({
       root: { display: 'flex', flexDirection: 'column', gap: 12, padding: '4px 4px 20px', maxWidth: 720 },
       titleRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
       title: { margin: 0, fontSize: 18, fontWeight: 600 },
-      languageField: { display: 'flex', alignItems: 'center', gap: 6 },
-      languageSelect: {
-        padding: '4px 6px', borderRadius: 6, border: '1px solid rgba(127,127,127,0.4)',
-        background: 'transparent', color: 'inherit', font: 'inherit',
+      languageField: { display: 'flex', alignItems: 'center', gap: 6, position: 'relative' },
+      languagePicker: { position: 'relative' },
+      languageButton: {
+        padding: '4px 8px', borderRadius: 6, border: '1px solid var(--dsw-alias-border-secondary, rgba(127,127,127,0.4))',
+        background: 'var(--dsw-alias-bg-primary, transparent)', color: 'inherit', font: 'inherit', cursor: 'pointer',
+      },
+      languageMenu: {
+        position: 'absolute', top: '100%', right: 0, marginTop: 4, minWidth: 150, padding: 4, zIndex: 1000,
+        borderRadius: 8, border: '1px solid var(--dsw-alias-border-secondary, rgba(127,127,127,0.4))',
+        background: 'var(--dsw-alias-bg-primary, #232529)', color: 'inherit',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
+      },
+      languageOption: {
+        display: 'block', width: '100%', padding: '6px 8px', border: 0, borderRadius: 4,
+        background: 'transparent', color: 'inherit', cursor: 'pointer', textAlign: 'left', font: 'inherit',
+      },
+      languageOptionActive: {
+        display: 'block', width: '100%', padding: '6px 8px', border: 0, borderRadius: 4,
+        background: 'var(--dsw-alias-interactive-bg-hover, rgba(127,127,127,0.18))', color: 'inherit',
+        cursor: 'pointer', textAlign: 'left', font: 'inherit',
       },
       modeRow: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
       segmented: { display: 'inline-flex', border: '1px solid rgba(127,127,127,0.4)', borderRadius: 8, overflow: 'hidden' },
@@ -500,6 +516,55 @@ window.__ModuleLoader__.load({
       return h('label', { style: styles.fieldRow },
         h('span', { style: styles.label }, label),
         input)
+    }
+
+    const LANGUAGE_OPTIONS = [
+      ['auto', () => 'auto'],
+      ['en', () => 'English'],
+      ['zh', () => '中文'],
+      ['ko', () => '한국어'],
+    ]
+
+    /** Theme-aware replacement for a native select, whose popup ignores dark mode. */
+    function LanguagePicker({ language, onChange, t }) {
+      const [open, setOpen] = useState(false)
+      const root = useRef(null)
+      useEffect(() => {
+        if (!open) return undefined
+        const onDown = (event) => {
+          if (!root.current?.contains(event.target)) setOpen(false)
+        }
+        const onKey = (event) => {
+          if (event.key === 'Escape') setOpen(false)
+        }
+        document.addEventListener('mousedown', onDown)
+        window.addEventListener('keydown', onKey)
+        return () => {
+          document.removeEventListener('mousedown', onDown)
+          window.removeEventListener('keydown', onKey)
+        }
+      }, [open])
+      const label = language === 'auto' ? t('auto') : (language === 'en' ? 'English' : language === 'zh' ? '中文' : '한국어')
+      return h('div', { ref: root, style: styles.languagePicker },
+        h('button', {
+          type: 'button',
+          style: styles.languageButton,
+          'aria-haspopup': 'listbox',
+          'aria-expanded': open,
+          onClick: () => setOpen((value) => !value),
+        }, `${label} ▾`),
+        open ? h('div', { style: styles.languageMenu, role: 'listbox' },
+          LANGUAGE_OPTIONS.map(([value, fallback]) => h('button', {
+            key: value,
+            type: 'button',
+            role: 'option',
+            'aria-selected': language === value,
+            style: language === value ? styles.languageOptionActive : styles.languageOption,
+            onClick: () => {
+              onChange(value)
+              setOpen(false)
+            },
+          }, value === 'auto' ? t('auto') : fallback()))) : null)
     }
 
     const badgeCache = new Map()
@@ -1043,18 +1108,9 @@ window.__ModuleLoader__.load({
       return h('div', { style: styles.root },
         h('div', { style: styles.titleRow },
           h('h2', { style: styles.title }, 'Session sync'),
-          h('label', { style: styles.languageField },
+          h('div', { style: styles.languageField },
             h('span', { style: styles.label }, t('language')),
-            h('select', {
-              value: language,
-              'aria-label': t('language'),
-              onChange: (event) => changeLanguage(event.target.value),
-              style: styles.languageSelect,
-            },
-              h('option', { value: 'auto' }, t('auto')),
-              h('option', { value: 'en' }, 'English'),
-              h('option', { value: 'zh' }, '中文'),
-              h('option', { value: 'ko' }, '한국어')))),
+            h(LanguagePicker, { language, onChange: changeLanguage, t }))),
         h('p', { style: styles.muted }, t('intro')),
 
         h('div', { style: styles.modeRow },

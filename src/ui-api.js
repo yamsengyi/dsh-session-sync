@@ -73,6 +73,7 @@ export function createSessionSyncRoutes(options) {
   register('POST', '/session-sync/api/session', (body) => handlers.sessionInfo(body))
   register('POST', '/session-sync/api/workspaces/scan', () => handlers.scanWorkspaces())
   register('GET', '/session-sync/api/projects', () => handlers.listProjects())
+  register('GET', '/session-sync/api/sessions', () => handlers.listSessions())
   register('POST', '/session-sync/api/projects/prepare', (body) => handlers.prepareProject(body))
   register('POST', '/session-sync/api/projects/sync', (body) => handlers.syncProject(body))
   register('POST', '/session-sync/api/sync', () => handlers.syncNow())

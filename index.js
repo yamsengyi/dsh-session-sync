@@ -1126,6 +1126,12 @@ export async function apply(ctx, raw) {
     return { projects: Array.isArray(result?.folders) ? result.folders : [] }
   }
 
+  const listSessions = async () => {
+    if (!runtime.client) throw new SyncHttpError(409, 'client-inactive', 'client mode is not active')
+    const result = await runtime.client.sessions()
+    return { sessions: Array.isArray(result?.sessions) ? result.sessions : [] }
+  }
+
   const prepareProject = async (body) => {
     const folderId = String(body?.folderId ?? '').trim()
     if (!FOLDER_ID.test(folderId)) throw new SyncHttpError(400, 'invalid-project', 'invalid project id')
@@ -1214,6 +1220,7 @@ export async function apply(ctx, raw) {
         sessionInfo,
         scanWorkspaces,
         listProjects,
+        listSessions,
         prepareProject,
         syncProject,
         syncNow,

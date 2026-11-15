@@ -35,6 +35,16 @@ window.__ModuleLoader__.load({
         'projects.close': 'Close',
         'projects.empty': 'No saved projects',
         'projects.hub': 'Hub projects',
+        'projects.tabProjects': 'Projects',
+        'projects.tabSessions': 'Sessions',
+        'projects.mergedHint': 'Local and server projects in one list.',
+        'projects.serverOnly': 'Server only',
+        'projects.localOnly': 'Local only',
+        'projects.synced': 'Synced',
+        'projects.checkpoints': '{count} checkpoints',
+        'projects.sessionServer': 'On server',
+        'projects.sessionsEmpty': 'No sessions on the server.',
+        'projects.sessionsHint': 'The hub stores session history; it is not imported into local DSH sessions.',
         'projects.join': 'Import',
         'projects.none': 'No hub projects',
         'projects.savePath': 'Save path',
@@ -150,6 +160,16 @@ window.__ModuleLoader__.load({
         'projects.close': '关闭',
         'projects.empty': '暂无已保存项目',
         'projects.hub': '中枢项目',
+        'projects.tabProjects': '项目',
+        'projects.tabSessions': '会话',
+        'projects.mergedHint': '本地和服务器项目合并在一个列表中。',
+        'projects.serverOnly': '仅在服务器',
+        'projects.localOnly': '仅在本地',
+        'projects.synced': '已同步',
+        'projects.checkpoints': '{count} 个检查点',
+        'projects.sessionServer': '在服务器上',
+        'projects.sessionsEmpty': '服务器上没有会话。',
+        'projects.sessionsHint': '中枢保存会话历史；不会导入到本地 DSH 会话。',
         'projects.join': '导入',
         'projects.none': '没有中枢项目',
         'projects.savePath': '保存路径',
@@ -265,6 +285,16 @@ window.__ModuleLoader__.load({
         'projects.close': '닫기',
         'projects.empty': '저장된 프로젝트가 없습니다',
         'projects.hub': '허브 프로젝트',
+        'projects.tabProjects': '프로젝트',
+        'projects.tabSessions': '세션',
+        'projects.mergedHint': '로컬과 서버 프로젝트를 하나의 목록에서 봅니다.',
+        'projects.serverOnly': '서버에만 있음',
+        'projects.localOnly': '로컬에만 있음',
+        'projects.synced': '동기화됨',
+        'projects.checkpoints': '체크포인트 {count}개',
+        'projects.sessionServer': '서버에 있음',
+        'projects.sessionsEmpty': '서버에 세션이 없습니다.',
+        'projects.sessionsHint': '세션 이력은 허브에 저장되며 로컬 DSH 세션으로 가져오지 않습니다.',
         'projects.join': '가져오기',
         'projects.none': '허브 프로젝트가 없습니다',
         'projects.savePath': '저장 경로',
@@ -493,10 +523,7 @@ window.__ModuleLoader__.load({
       badge: { fontSize: 12, opacity: 0.75 },
       pending: { fontSize: 12, color: '#d08a2e' },
       section: { border: '1px solid rgba(127,127,127,0.28)', borderRadius: 8, padding: 10, display: 'flex', flexDirection: 'column', gap: 6 },
-      hostProjects: {
-        marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(127,127,127,0.25)',
-        display: 'flex', flexDirection: 'column', gap: 6,
-      },      heading: { margin: 0, fontSize: 14, fontWeight: 600 },
+      heading: { margin: 0, fontSize: 14, fontWeight: 600 },
       row: { display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' },
       buttonRow: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
       field: fieldBase,
@@ -720,6 +747,15 @@ window.__ModuleLoader__.load({
         display: 'flex', flexDirection: 'column', gap: 10,
       },
       header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+      tabs: { display: 'flex', gap: 6, borderBottom: '1px solid rgba(127,127,127,0.25)', paddingBottom: 6 },
+      tab: {
+        padding: '4px 10px', borderRadius: 6, border: '1px solid transparent',
+        background: 'transparent', color: 'inherit', cursor: 'pointer', fontSize: 12, opacity: 0.7,
+      },
+      tabActive: {
+        padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(127,127,127,0.35)',
+        background: 'rgba(127,127,127,0.14)', color: 'inherit', cursor: 'pointer', fontSize: 12,
+      },
       title: { margin: 0, fontSize: 16, fontWeight: 600 },
       close: {
         border: '1px solid rgba(127,127,127,0.35)', borderRadius: 6,
@@ -753,6 +789,9 @@ window.__ModuleLoader__.load({
       const [error, setError] = useState('')
       const [hubProjects, setHubProjects] = useState([])
       const [projectsError, setProjectsError] = useState('')
+      const [hubSessions, setHubSessions] = useState([])
+      const [sessionsError, setSessionsError] = useState('')
+      const [tab, setTab] = useState('projects')
       const [joinProject, setJoinProject] = useState(null)
       const [joinPath, setJoinPath] = useState('')
       const [editingPath, setEditingPath] = useState(false)
@@ -767,6 +806,9 @@ window.__ModuleLoader__.load({
         setError('')
         setProjectsError('')
         setHubProjects([])
+        setSessionsError('')
+        setHubSessions([])
+        setTab('projects')
         setJoinProject(null)
         void call('status').then((data) => {
           if (alive) setStatus(data)
@@ -778,6 +820,12 @@ window.__ModuleLoader__.load({
           setHubProjects(Array.isArray(data?.projects) ? data.projects : [])
         }).catch((reason) => {
           if (alive) setProjectsError(String(reason?.message ?? reason))
+        })
+        void call('sessions').then((data) => {
+          if (!alive) return
+          setHubSessions(Array.isArray(data?.sessions) ? data.sessions : [])
+        }).catch((reason) => {
+          if (alive) setSessionsError(String(reason?.message ?? reason))
         })
         const onKey = (event) => {
           if (event.key === 'Escape') setOpen(false)
@@ -828,20 +876,50 @@ window.__ModuleLoader__.load({
         }
       }
 
-      const shared = status?.knownWorkspaces?.filter((ws) => ws.shared) ?? []
-      const local = status?.knownWorkspaces?.filter((ws) => !ws.shared) ?? []
-      const row = (ws) => h('div', { key: ws.path, style: projectStyles.row },
-        h('span', { style: projectStyles.path, title: ws.path }, ws.path),
-        h('span', { style: ws.shared ? projectStyles.shared : projectStyles.local },
-          ws.shared ? tr('workspace.badgeShared') : tr('workspace.badgeLocal')))
-      const hubRow = (project) => h('div', { key: project.id, style: projectStyles.row },
-        h('span', { style: projectStyles.path, title: project.id }, project.name || project.id),
-        h('span', { style: projectStyles.hint }, `v${project.headVersion ?? 0}`),
-        h('button', {
-          type: 'button',
-          style: projectStyles.button,
-          onClick: () => selectProject(project),
-        }, tr('projects.join')))
+      const known = status?.knownWorkspaces ?? []
+      const hubById = new Map(hubProjects.map((project) => [project.id, project]))
+      const localByFolder = new Map()
+      for (const ws of known) if (ws.folderId) localByFolder.set(ws.folderId, ws)
+      const unified = []
+      for (const project of hubProjects) {
+        unified.push({ key: `hub:${project.id}`, hub: project, local: localByFolder.get(project.id) })
+      }
+      for (const ws of known) {
+        if (ws.folderId && hubById.has(ws.folderId)) continue
+        unified.push({ key: `local:${ws.path}`, hub: null, local: ws })
+      }
+
+      const projectRow = (item) => {
+        const { hub, local } = item
+        const badge = hub && local
+          ? tr('projects.synced')
+          : hub
+            ? tr('projects.serverOnly')
+            : tr('projects.localOnly')
+        return h('div', { key: item.key, style: projectStyles.row },
+          h('div', { style: { display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: '1 1 auto' } },
+            h('span', { style: projectStyles.path, title: hub?.id || local?.path || '' }, hub?.name || local?.path || '—'),
+            local?.path ? h('span', { style: projectStyles.hint, title: local.path }, local.path) : null,
+            hub ? h('span', { style: projectStyles.hint },
+              `v${hub.headVersion ?? 0} · ${tr('projects.checkpoints', { count: hub.checkpointCount ?? 0 })}`) : null),
+          h('span', { style: hub && local ? projectStyles.shared : projectStyles.local }, badge),
+          hub && !local ? h('button', {
+            type: 'button',
+            style: projectStyles.button,
+            onClick: () => selectProject(hub),
+          }, tr('projects.join')) : null)
+      }
+
+      const sessionRow = (session) => {
+        const header = session.header ?? {}
+        return h('div', { key: session.id, style: projectStyles.row },
+          h('div', { style: { display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: '1 1 auto' } },
+            h('span', { style: projectStyles.path, title: session.id }, header.title || session.id),
+            header.cwd ? h('span', { style: projectStyles.hint, title: header.cwd }, header.cwd) : null,
+            h('span', { style: projectStyles.hint },
+              `${header.createdAt ? new Date(header.createdAt).toLocaleString(lang) : '-'} · v${session.head?.version ?? 0}`)),
+          h('span', { style: projectStyles.local }, tr('projects.sessionServer')))
+      }
 
       return h(React.Fragment, null,
         children,
@@ -876,6 +954,19 @@ window.__ModuleLoader__.load({
               onClick: () => setOpen(false),
             }, tr('projects.close'))),
           error ? h('p', { style: projectStyles.hint }, error) : null,
+          !joinProject ? h('div', { style: projectStyles.tabs },
+            h('button', {
+              type: 'button',
+              style: tab === 'projects' ? projectStyles.tabActive : projectStyles.tab,
+              disabled: joining,
+              onClick: () => setTab('projects'),
+            }, tr('projects.tabProjects')),
+            h('button', {
+              type: 'button',
+              style: tab === 'sessions' ? projectStyles.tabActive : projectStyles.tab,
+              disabled: joining,
+              onClick: () => setTab('sessions'),
+            }, tr('projects.tabSessions'))) : null,
           joinProject ? h('div', { style: projectStyles.group },
             h('span', { style: projectStyles.heading }, joinProject.name || joinProject.id),
             h('p', { style: projectStyles.hint }, tr('projects.rootHint', {
@@ -923,21 +1014,16 @@ window.__ModuleLoader__.load({
                 onClick: confirmJoin,
               }, tr('projects.confirm'))),
             joining ? h('p', { style: projectStyles.hint }, tr('projects.joining')) : null) : h(React.Fragment, null,
-            h('div', { style: projectStyles.group },
-              h('span', { style: projectStyles.heading }, tr('projects.hub')),
+            h('p', { style: projectStyles.hint },
+              tab === 'projects' ? tr('projects.mergedHint') : tr('projects.sessionsHint')),
+            tab === 'projects' ? h(React.Fragment, null,
               projectsError ? h('p', { style: projectStyles.hint }, projectsError) : null,
-              !projectsError && hubProjects.length === 0
-                ? h('p', { style: projectStyles.hint }, tr('projects.none'))
-                : hubProjects.map(hubRow)),
-            shared.length ? h('div', { style: projectStyles.group },
-              h('span', { style: projectStyles.heading }, tr('projects.shared')),
-              shared.map(row)) : null,
-            local.length ? h('div', { style: projectStyles.group },
-              h('span', { style: projectStyles.heading }, tr('projects.local')),
-              local.map(row)) : null,
-            !error && status && shared.length === 0 && local.length === 0
-              ? h('p', { style: projectStyles.hint }, tr('projects.empty'))
-              : null),
+              unified.length ? unified.map(projectRow)
+                : !projectsError ? h('p', { style: projectStyles.hint }, tr('projects.empty')) : null)
+              : h(React.Fragment, null,
+                sessionsError ? h('p', { style: projectStyles.hint }, sessionsError) : null,
+                hubSessions.length ? hubSessions.map(sessionRow)
+                  : !sessionsError ? h('p', { style: projectStyles.hint }, tr('projects.sessionsEmpty')) : null)),
         )) : null)
     }
 
@@ -957,10 +1043,6 @@ window.__ModuleLoader__.load({
       const [name, setName] = useState('')
       const [workspace, setWorkspace] = useState('')
       const [initialized, setInitialized] = useState(false)
-      const [serverOpen, setServerOpen] = useState(false)
-      const [serverProjects, setServerProjects] = useState([])
-      const [serverBusy, setServerBusy] = useState(false)
-      const [serverError, setServerError] = useState('')
 
       const lang = language === 'auto' ? detected : language
       const t = (key, params) => translate(lang, key, params)
@@ -1017,10 +1099,6 @@ window.__ModuleLoader__.load({
         // eslint-disable-next-line react-hooks/exhaustive-deps
       }, [])
 
-      useEffect(() => {
-        if (mode !== 'host') setServerOpen(false)
-      }, [mode])
-
       const checkUpdate = () => run(t('action.checkUpdate'), async () => {
         const result = await call('update', { force: true })
         setUpdate(result)
@@ -1052,21 +1130,6 @@ window.__ModuleLoader__.load({
       })
 
       const syncNow = () => run(t('sync.heading'), () => call('sync', {}))
-
-      const openServerProjects = async () => {
-        setServerOpen(true)
-        setServerBusy(true)
-        setServerError('')
-        setServerProjects([])
-        try {
-          const data = await call('projects')
-          setServerProjects(Array.isArray(data?.projects) ? data.projects : [])
-        } catch (reason) {
-          setServerError(`${t('host.projectsError')} ${String(reason?.message ?? reason)}`)
-        } finally {
-          setServerBusy(false)
-        }
-      }
 
       const rotate = () => run(t('host.rotate'), () => call('code', { rotate: true }))
 
@@ -1166,14 +1229,6 @@ window.__ModuleLoader__.load({
             h('code', { style: styles.code }, status.hub.pairingCode),
             h('button', { style: styles.smallButton, disabled: Boolean(busy), onClick: copyCode }, t('host.copy')),
             h('button', { style: styles.smallButton, disabled: Boolean(busy), onClick: rotate }, t('host.rotate'))) : null,
-          h('div', { style: styles.hostProjects },
-            h('span', { style: styles.groupHeading }, t('host.projects')),
-            h('p', { style: styles.hint }, t('host.projectsHint')),
-            h('button', {
-              style: styles.button,
-              disabled: serverBusy,
-              onClick: openServerProjects,
-            }, t('host.projectsButton'))),
         ) : null,
 
         showClient ? h('section', { style: styles.section },
@@ -1261,33 +1316,6 @@ window.__ModuleLoader__.load({
           ? h('p', { style: styles.updateAvailable }, t('update.reinstall'))
           : null,
         h('p', { style: styles.hint }, `Session sync v${status?.pluginVersion ?? '?'} · protocol ${status?.protocol ?? '?'}`),
-        serverOpen ? h('div', {
-          style: projectStyles.overlay,
-          onClick: () => setServerOpen(false),
-        }, h('div', {
-          style: { ...projectStyles.modal, maxHeight: '70vh', overflow: 'auto' },
-          role: 'dialog',
-          'aria-modal': 'true',
-          'aria-label': t('server.title'),
-          onClick: (event) => event.stopPropagation(),
-        },
-          h('div', { style: projectStyles.header },
-            h('h3', { style: projectStyles.title }, t('server.title')),
-            h('button', {
-              type: 'button',
-              style: projectStyles.close,
-              onClick: () => setServerOpen(false),
-            }, t('server.close'))),
-          serverError ? h('p', { style: projectStyles.hint }, serverError) : null,
-          serverBusy ? h('p', { style: projectStyles.hint }, '…') : null,
-          !serverBusy && !serverError && serverProjects.length === 0
-            ? h('p', { style: projectStyles.hint }, t('host.projectsEmpty'))
-            : null,
-          serverProjects.map((project) => h('div', { key: project.id, style: projectStyles.row },
-            h('div', { style: { display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: '1 1 auto' } },
-              h('span', { style: projectStyles.path, title: project.id }, project.name || project.id),
-              h('span', { style: projectStyles.hint },
-                `${t('server.meta', { version: project.headVersion ?? 0, count: project.checkpointCount ?? 0 })} · ${t('server.updated', { time: project.updatedAt ? new Date(project.updatedAt).toLocaleString(lang) : '-' })}`)))))) : null,
       )
     }
 

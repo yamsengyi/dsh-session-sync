@@ -55,6 +55,7 @@ function baseHandlers(overrides = {}) {
     sessionInfo: async (body) => ({ session: body }),
     scanWorkspaces: async () => ({ scan: true }),
     listProjects: async () => ({ projects: [] }),
+    listSessions: async () => ({ sessions: [] }),
     prepareProject: async (body) => ({ prepare: body }),
     syncProject: async (body) => ({ sync: body }),
     syncNow: async () => ({ synced: true }),
@@ -120,10 +121,11 @@ test('trust rejection and admission rejection stop before the handler', async ()
 
 test('disposing the routes removes every registration', () => {
   const { routes, dispose } = harness(baseHandlers())
-  assert.equal(routes.size, 14)
+  assert.equal(routes.size, 15)
   dispose()
   assert.equal(routes.size, 0)
 })
+
 
 
 

@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.9.4` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.9.5` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -116,8 +116,10 @@ safest first-sync target.
 
 ## Import a shared project (Join)
 
-On the receiving PC, open the **Projects** modal beside **New session** and choose
-**Hub projects → Import**:
+On the receiving PC, open the **Projects** modal beside **New session**. The
+**Projects** tab is one unified list of local and server projects, each tagged
+**Synced**, **Server only**, or **Local only**. A **Server only** row offers
+**Import**:
 
 1. The default save path is `<shared root>/<project name>`, where the shared root
    is `defaultWorkspace` (`~\Documents\deepseek-harness\sync-default` by default).
@@ -159,11 +161,12 @@ location instead of moving the recorded one.
 - **Update check** — the settings footer compares the installed version with
   the latest GitHub tag and offers a manual check. Each installed profile checks
   independently; the result is cached for an hour.
-- **Host server projects** — Host mode adds a separate **Server projects**
-  area under **Host settings**. **프로젝트 확인** lists every project in the hub
-  (the host's own plus every client's) with version, checkpoint count, and
-  updated time. It is a view-only confirmation; importing a project still uses
-  the Projects modal's **Hub projects → Import** flow.
+- **Unified Projects modal** — the **Projects** button beside **New session** is
+  the single management surface for both Host and Client. Its **Projects** tab
+  merges local workspaces and hub projects into one list (Synced / Server only /
+  Local only), and its **Sessions** tab lists every session stored on the hub.
+  There is no separate Host-only server panel; the Host sees the same hub through
+  its self-client.
 - **Manual update status** — Settings → General shows the same current/latest
   check as the footer. Installation stays with the DSH Plugin Manager
   (Plugins → the bundle → Update, or reinstall the latest GitHub URL); this

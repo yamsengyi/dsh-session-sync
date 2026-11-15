@@ -143,13 +143,23 @@ input, and on confirm runs prepare → create/open a project session via
 `ctx.workspaces.create` and `ctx.uiWorkspace.openWorkspace` → pull. This is a
 single-root join; session history is not imported.
 
-## Host server projects
+## Unified Projects modal
 
-Host mode renders a separate **Server projects** block inside the Host settings
-section. **프로젝트 확인** calls `GET /session-sync/api/projects`, which proxies
-the hub's `GET /v1/folders`; it lists every hub project (the host's own and all
-clients') with version, checkpoint count, and update time. It is view-only;
-materializing one on the host still uses the Projects modal's Import flow.
+The **Projects** button beside **New session** is the single management surface
+for both Host and Client; there is no separate Host-only server panel. The modal
+has two tabs:
+
+- **Projects** merges `status.knownWorkspaces` (local DSH workspaces) with
+  `GET /session-sync/api/projects` (the hub's `GET /v1/folders`) into one list,
+  keyed by `folderId`. Each row is tagged **Synced** (both), **Server only**
+  (hub only, offers Import), or **Local only** (local only).
+- **Sessions** calls `GET /session-sync/api/sessions`, which proxies the hub's
+  `GET /v1/sessions`, and lists every stored session with title, cwd, created
+  time, and head version. Session history stays on the hub; it is not imported
+  into local DSH sessions.
+
+The Host reaches the same hub through its in-process self-client, so it sees its
+own projects plus every client's in the same list.
 
 ## Default root vs shared projects
 

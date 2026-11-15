@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.4.1` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.4.2` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -79,6 +79,27 @@ The page is a browser client that calls exact Host routes under
 `/session-sync/api/...`. Connection authenticates every request as the browser
 Peer; the bundle stays build-free. The `/session-sync` commands remain for
 automation.
+
+## Default workspace vs shared workspace
+
+DSH creates its own first-use workspace at
+`<Documents>\deepseek-harness\default-workspace`; this plugin never creates or
+moves that folder. The Settings page starts with an **empty** workspace path, so
+choose a real project or press **Use current** yourself.
+
+To change where DSH creates **future** default workspaces, override the
+workspace controller in the profile patch:
+
+```yaml
+- id: workspace-controller
+  name: "@deepseek-ai/dsh-api-workspace-controller"
+  config:
+    documentsDirectory: "D:\\DSH"
+```
+
+The default then becomes `D:\DSH\deepseek-harness\default-workspace`. An existing
+default workspace keeps its old path; create a new workspace for the new
+location instead of moving the recorded one.
 
 ## Layout
 

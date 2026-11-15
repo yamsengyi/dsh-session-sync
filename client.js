@@ -116,7 +116,7 @@ window.__ModuleLoader__.load({
           setTarget(next.client.hubUrl ?? hostUrl(next))
           setCode(next.hub.pairingCode ?? '')
           setName(next.client.deviceName ?? '')
-          setWorkspace(next.workspace.path ?? next.currentPath ?? '')
+          setWorkspace(next.workspace.path ?? '')
           setInitialized(true)
         }
         return next

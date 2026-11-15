@@ -101,6 +101,17 @@ Mode switches use the marker files, so they require `role: auto` (the bundle
 default). An explicit `role: hub` or `role: client` override in a profile patch
 wins over the markers and makes the host/client toggles ineffective.
 
+## Default workspace vs shared workspace
+
+The first-use workspace at `<Documents>\deepseek-harness\default-workspace` is
+created by DSH's workspace controller, not by this plugin. The Settings page
+starts with an empty path and only fills it when the operator chooses a folder
+or presses **Use current**.
+
+A deployment can change where DSH creates **future** default workspaces through
+the controller's `documentsDirectory` config (a fully qualified Host path). The
+existing default workspace record is not moved by that change.
+
 ## Opting a workspace in
 
 Automatic commits only touch a workspace that carries `.dsh-sync.json` at its

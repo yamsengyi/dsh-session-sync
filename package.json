@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "description": "Personal sync hub for DSH sessions and workspace snapshots",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yamsengyi/dsh-sync.git"
+  },
+  "homepage": "https://github.com/yamsengyi/dsh-sync#readme",
   "exports": {
     ".": "./index.js",
     "./locale/*.json": "./locale/*.json",

@@ -14,7 +14,7 @@ https://github.com/yamsengyi/dsh-session-sync
 
 The **Registry** dropdown applies to package-name installs; a GitHub URL
 bypasses it, so leave the dropdown at its default. Pin a release with
-`https://github.com/yamsengyi/dsh-session-sync#v0.9.2` if you want
+`https://github.com/yamsengyi/dsh-session-sync#v0.9.3` if you want
 reproducibility. Reload DSH once after installation so the plugin code and the
 `/session-sync` command load.
 
@@ -159,6 +159,11 @@ location instead of moving the recorded one.
 - **Update check** — the settings footer compares the installed version with
   the latest GitHub tag and offers a manual check. Each installed profile checks
   independently; the result is cached for an hour.
+- **Host server projects** — Host mode adds a separate **Server projects**
+  area under **Host settings**. **프로젝트 확인** lists every project in the hub
+  (the host's own plus every client's) with version, checkpoint count, and
+  updated time. It is a view-only confirmation; importing a project still uses
+  the Projects modal's **Hub projects → Import** flow.
 - **Manual update seats** — the same small update control is registered in
   **Plugins → @yamsengyi/dsh-session-sync → detail actions** and
   **Settings → General → Session sync update**. Update execution calls the DSH

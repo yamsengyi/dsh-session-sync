@@ -143,6 +143,14 @@ input, and on confirm runs prepare → create/open a project session via
 `ctx.workspaces.create` and `ctx.uiWorkspace.openWorkspace` → pull. This is a
 single-root join; session history is not imported.
 
+## Host server projects
+
+Host mode renders a separate **Server projects** block inside the Host settings
+section. **프로젝트 확인** calls `GET /session-sync/api/projects`, which proxies
+the hub's `GET /v1/folders`; it lists every hub project (the host's own and all
+clients') with version, checkpoint count, and update time. It is view-only;
+materializing one on the host still uses the Projects modal's Import flow.
+
 ## Default root vs shared projects
 
 The first-use workspace at `<Documents>\deepseek-harness\default-workspace` is

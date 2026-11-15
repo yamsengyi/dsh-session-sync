@@ -24,7 +24,7 @@ window.__ModuleLoader__.load({
 
     const STRINGS = {
       en: {
-        intro: 'Sync DSH sessions and workspace checkpoints with a personal hub.',
+        intro: 'Sync DSH sessions and project checkpoints with a personal hub.',
         language: 'Language',
         auto: 'Auto (DSH)',
         'badge.shared': 'Shared',
@@ -45,7 +45,7 @@ window.__ModuleLoader__.load({
         'projects.joining': 'Creating the session and syncing…',
         'projects.emptyWarning': 'An empty folder is recommended; existing files may conflict.',
         'projects.rootHint': 'Shared root: {root}',
-        'projects.servicesMissing': 'Workspace/session service is unavailable.',
+        'projects.servicesMissing': 'Project/session service is unavailable.',
         'mode.host': 'Host',
         'mode.client': 'Client',
         'mode.both': 'Both',
@@ -64,12 +64,21 @@ window.__ModuleLoader__.load({
         'host.port': 'Port',
         'host.bind': 'Bind address',
         'host.running': 'Running: {url}',
-        'host.selfSync': "This machine's sessions and workspace are also uploaded to its own hub.",
+        'host.selfSync': "This machine's sessions and projects are also uploaded to its own hub.",
+        'host.projects': 'Server projects',
+        'host.projectsHint': 'Projects uploaded by clients to this host.',
+        'host.projectsButton': 'View projects',
+        'host.projectsEmpty': 'No projects on this host yet.',
+        'host.projectsError': 'Cannot read server projects.',
         'host.configuredStopped': 'Configured · stopped (apply mode to start)',
         'host.startHint': 'Starts after you apply the mode.',
         'host.pairingCode': 'Pairing code',
         'host.copy': 'Copy',
         'host.rotate': 'Rotate',
+        'server.title': 'Server projects',
+        'server.close': 'Close',
+        'server.meta': 'v{version} · {count} checkpoints',
+        'server.updated': 'Updated {time}',
         'client.heading': 'Client settings',
         'client.target': 'Target URL (host:port)',
         'client.useHostInfo': 'Use host info',
@@ -83,16 +92,16 @@ window.__ModuleLoader__.load({
         'workspace.heading': 'Shared projects',
         'workspace.path': 'Path',
         'workspace.useCurrent': 'Use current session path',
-        'workspace.mark': 'Mark workspace',
+        'workspace.mark': 'Share project',
         'workspace.unmark': 'Unshare',
         'workspace.scan': 'Scan subfolders',
         'workspace.shared': 'Sharing (syncing) · {folderId}',
         'workspace.local': 'Not shared',
-        'workspace.list': 'Workspaces',
+        'workspace.list': 'Projects',
         'workspace.badgeShared': 'Sharing (syncing)',
         'workspace.badgeLocal': 'Not shared',
         'sync.heading': 'Project sync',
-        'sync.now': 'Sync now (sessions + workspace)',
+        'sync.now': 'Sync now (sessions + projects)',
         'sync.last': 'Last: {time} · sessions {sessions}/{events} events · pull {pull} · push {push} · conflicts {conflicts}',
         'sync.noChanges': '(no changes)',
         'sync.errors': '({count} errors)',
@@ -122,15 +131,15 @@ window.__ModuleLoader__.load({
         'error.invalid-pair': 'Enter a target URL and pairing code.',
         'error.pair-failed': 'Pairing failed.',
         'error.not-paired': 'Pair this machine first.',
-        'error.invalid-path': 'Workspace path is not valid or does not exist.',
-        'error.no-workspace': 'Mark a workspace first.',
-        'error.no-marker': 'Workspace is not marked for sync.',
-        'error.not-marked': 'Workspace is not marked for sync.',
+        'error.invalid-path': 'Project path is not valid or does not exist.',
+        'error.no-workspace': 'Share a project first.',
+        'error.no-marker': 'Project is not shared for sync.',
+        'error.not-marked': 'Project is not shared for sync.',
         'error.client-inactive': 'Client mode is not active; pair first.',
         'error.hub-inactive': 'Host mode is not running.',
       },
       zh: {
-        intro: '将 DSH 会话和工作区检查点同步到个人中枢。',
+        intro: '将 DSH 会话和项目检查点同步到个人中枢。',
         language: '语言',
         auto: '自动（DSH）',
         'badge.shared': '共享',
@@ -151,7 +160,7 @@ window.__ModuleLoader__.load({
         'projects.joining': '正在创建会话并同步…',
         'projects.emptyWarning': '建议使用空文件夹；已有文件可能冲突。',
         'projects.rootHint': '共享根目录：{root}',
-        'projects.servicesMissing': '工作区/会话服务不可用。',
+        'projects.servicesMissing': '项目/会话服务不可用。',
         'mode.host': '主机',
         'mode.client': '客户端',
         'mode.both': '两者',
@@ -170,12 +179,21 @@ window.__ModuleLoader__.load({
         'host.port': '端口',
         'host.bind': '绑定地址',
         'host.running': '运行中：{url}',
-        'host.selfSync': '本机的会话和工作区也会上传到自己的中枢。',
+        'host.selfSync': '本机的会话和项目也会上传到自己的中枢。',
+        'host.projects': '服务器共享项目',
+        'host.projectsHint': '客户端上传到此主机的项目。',
+        'host.projectsButton': '查看项目',
+        'host.projectsEmpty': '此主机上还没有项目。',
+        'host.projectsError': '无法读取服务器项目。',
         'host.configuredStopped': '已配置 · 已停止（应用模式后启动）',
         'host.startHint': '应用模式后启动。',
         'host.pairingCode': '配对码',
         'host.copy': '复制',
         'host.rotate': '轮换',
+        'server.title': '服务器共享项目',
+        'server.close': '关闭',
+        'server.meta': 'v{version} · {count} 个检查点',
+        'server.updated': '更新于 {time}',
         'client.heading': '客户端设置',
         'client.target': '目标 URL（主机地址:端口）',
         'client.useHostInfo': '使用主机信息填充',
@@ -189,16 +207,16 @@ window.__ModuleLoader__.load({
         'workspace.heading': '共享项目',
         'workspace.path': '路径',
         'workspace.useCurrent': '当前会话路径',
-        'workspace.mark': '标记工作区',
+        'workspace.mark': '共享项目',
         'workspace.unmark': '取消共享',
         'workspace.scan': '扫描子文件夹',
         'workspace.shared': '共享中（同步中） · {folderId}',
         'workspace.local': '未共享',
-        'workspace.list': '工作区列表',
+        'workspace.list': '项目列表',
         'workspace.badgeShared': '共享中（同步中）',
         'workspace.badgeLocal': '未共享',
         'sync.heading': '项目同步',
-        'sync.now': '立即同步（会话 + 工作区）',
+        'sync.now': '立即同步（会话 + 项目）',
         'sync.last': '上次：{time} · 会话 {sessions}/{events} 个事件 · 拉取 {pull} · 推送 {push} · 冲突 {conflicts}',
         'sync.noChanges': '（无变化）',
         'sync.errors': '（{count} 个错误）',
@@ -228,15 +246,15 @@ window.__ModuleLoader__.load({
         'error.invalid-pair': '请输入目标 URL 和配对码。',
         'error.pair-failed': '配对失败。',
         'error.not-paired': '请先配对本机。',
-        'error.invalid-path': '工作区路径无效或不存在。',
-        'error.no-workspace': '请先标记工作区。',
-        'error.no-marker': '该工作区尚未标记为同步。',
-        'error.not-marked': '该工作区未标记为同步。',
+        'error.invalid-path': '项目路径无效或不存在。',
+        'error.no-workspace': '请先共享项目。',
+        'error.no-marker': '该项目尚未标记为同步。',
+        'error.not-marked': '该项目未标记为同步。',
         'error.client-inactive': '客户端模式未启用；请先配对。',
         'error.hub-inactive': '主机模式未运行。',
       },
       ko: {
-        intro: 'DSH 세션과 워크스페이스 체크포인트를 개인 허브와 동기화합니다.',
+        intro: 'DSH 세션과 프로젝트 체크포인트를 개인 허브와 동기화합니다.',
         language: '언어',
         auto: '자동(DSH)',
         'badge.shared': '공유',
@@ -257,7 +275,7 @@ window.__ModuleLoader__.load({
         'projects.joining': '세션 생성 및 동기화 중…',
         'projects.emptyWarning': '빈 폴더를 권장합니다. 기존 파일이 있으면 충돌할 수 있습니다.',
         'projects.rootHint': '공유 루트: {root}',
-        'projects.servicesMissing': '워크스페이스/세션 서비스를 사용할 수 없습니다.',
+        'projects.servicesMissing': '프로젝트/세션 서비스를 사용할 수 없습니다.',
         'mode.host': '호스트',
         'mode.client': '클라이언트',
         'mode.both': '둘 다',
@@ -276,12 +294,21 @@ window.__ModuleLoader__.load({
         'host.port': '포트',
         'host.bind': '바인딩 주소',
         'host.running': '실행 중: {url}',
-        'host.selfSync': '이 컴퓨터의 세션과 워크스페이스도 자체 허브로 업로드됩니다.',
+        'host.selfSync': '이 컴퓨터의 세션과 프로젝트도 자체 허브로 업로드됩니다.',
+        'host.projects': '서버 공유 프로젝트',
+        'host.projectsHint': '클라이언트가 이 Host에 올린 프로젝트입니다.',
+        'host.projectsButton': '프로젝트 확인',
+        'host.projectsEmpty': '이 Host에 아직 공유된 프로젝트가 없습니다.',
+        'host.projectsError': '서버 프로젝트를 읽을 수 없습니다.',
         'host.configuredStopped': '설정됨 · 중지됨 (모드 적용으로 시작)',
         'host.startHint': '모드 적용 후 시작됩니다.',
         'host.pairingCode': '페어링 코드',
         'host.copy': '복사',
         'host.rotate': '회전',
+        'server.title': '서버 공유 프로젝트',
+        'server.close': '닫기',
+        'server.meta': 'v{version} · 체크포인트 {count}개',
+        'server.updated': '업데이트 {time}',
         'client.heading': '클라이언트 설정',
         'client.target': '대상 URL (호스트 주소:포트)',
         'client.useHostInfo': '호스트 정보로 덮어쓰기',
@@ -295,16 +322,16 @@ window.__ModuleLoader__.load({
         'workspace.heading': '공유 프로젝트',
         'workspace.path': '경로',
         'workspace.useCurrent': '현재 세션 경로',
-        'workspace.mark': '워크스페이스 지정',
+        'workspace.mark': '프로젝트 공유',
         'workspace.unmark': '동기화 해제',
         'workspace.scan': '하위 폴더 스캔',
         'workspace.shared': '공유중(동기화중) · {folderId}',
         'workspace.local': '공유하지 않음',
-        'workspace.list': '워크스페이스 목록',
+        'workspace.list': '프로젝트 목록',
         'workspace.badgeShared': '공유중(동기화중)',
         'workspace.badgeLocal': '공유하지 않음',
         'sync.heading': '프로젝트 동기화',
-        'sync.now': '지금 동기화 (세션 + 워크스페이스)',
+        'sync.now': '지금 동기화 (세션 + 프로젝트)',
         'sync.last': '마지막: {time} · 세션 {sessions}/{events} 이벤트 · pull {pull} · push {push} · 충돌 {conflicts}',
         'sync.noChanges': '(변경 없음)',
         'sync.errors': '(오류 {count})',
@@ -334,10 +361,10 @@ window.__ModuleLoader__.load({
         'error.invalid-pair': '대상 URL과 페어링 코드를 입력하세요.',
         'error.pair-failed': '페어링에 실패했습니다.',
         'error.not-paired': '먼저 이 컴퓨터를 페어링하세요.',
-        'error.invalid-path': '워크스페이스 경로가 없거나 올바르지 않습니다.',
-        'error.no-workspace': '먼저 워크스페이스를 지정하세요.',
-        'error.no-marker': '워크스페이스가 동기화 대상으로 지정되지 않았습니다.',
-        'error.not-marked': '워크스페이스가 동기화 대상이 아닙니다.',
+        'error.invalid-path': '프로젝트 경로가 없거나 올바르지 않습니다.',
+        'error.no-workspace': '먼저 프로젝트를 공유하세요.',
+        'error.no-marker': '프로젝트가 동기화 대상으로 지정되지 않았습니다.',
+        'error.not-marked': '프로젝트가 동기화 대상이 아닙니다.',
         'error.client-inactive': '클라이언트 모드가 아닙니다. 먼저 페어링하세요.',
         'error.hub-inactive': '호스트 모드가 실행 중이 아닙니다.',
       },
@@ -466,7 +493,10 @@ window.__ModuleLoader__.load({
       badge: { fontSize: 12, opacity: 0.75 },
       pending: { fontSize: 12, color: '#d08a2e' },
       section: { border: '1px solid rgba(127,127,127,0.28)', borderRadius: 8, padding: 10, display: 'flex', flexDirection: 'column', gap: 6 },
-      heading: { margin: 0, fontSize: 14, fontWeight: 600 },
+      hostProjects: {
+        marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(127,127,127,0.25)',
+        display: 'flex', flexDirection: 'column', gap: 6,
+      },      heading: { margin: 0, fontSize: 14, fontWeight: 600 },
       row: { display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' },
       buttonRow: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
       field: fieldBase,
@@ -964,6 +994,10 @@ window.__ModuleLoader__.load({
       const [name, setName] = useState('')
       const [workspace, setWorkspace] = useState('')
       const [initialized, setInitialized] = useState(false)
+      const [serverOpen, setServerOpen] = useState(false)
+      const [serverProjects, setServerProjects] = useState([])
+      const [serverBusy, setServerBusy] = useState(false)
+      const [serverError, setServerError] = useState('')
 
       const lang = language === 'auto' ? detected : language
       const t = (key, params) => translate(lang, key, params)
@@ -1020,6 +1054,10 @@ window.__ModuleLoader__.load({
         // eslint-disable-next-line react-hooks/exhaustive-deps
       }, [])
 
+      useEffect(() => {
+        if (mode !== 'host') setServerOpen(false)
+      }, [mode])
+
       const checkUpdate = () => run(t('action.checkUpdate'), async () => {
         const result = await call('update', { force: true })
         setUpdate(result)
@@ -1051,6 +1089,21 @@ window.__ModuleLoader__.load({
       })
 
       const syncNow = () => run(t('sync.heading'), () => call('sync', {}))
+
+      const openServerProjects = async () => {
+        setServerOpen(true)
+        setServerBusy(true)
+        setServerError('')
+        setServerProjects([])
+        try {
+          const data = await call('projects')
+          setServerProjects(Array.isArray(data?.projects) ? data.projects : [])
+        } catch (reason) {
+          setServerError(`${t('host.projectsError')} ${String(reason?.message ?? reason)}`)
+        } finally {
+          setServerBusy(false)
+        }
+      }
 
       const rotate = () => run(t('host.rotate'), () => call('code', { rotate: true }))
 
@@ -1150,6 +1203,14 @@ window.__ModuleLoader__.load({
             h('code', { style: styles.code }, status.hub.pairingCode),
             h('button', { style: styles.smallButton, disabled: Boolean(busy), onClick: copyCode }, t('host.copy')),
             h('button', { style: styles.smallButton, disabled: Boolean(busy), onClick: rotate }, t('host.rotate'))) : null,
+          h('div', { style: styles.hostProjects },
+            h('span', { style: styles.groupHeading }, t('host.projects')),
+            h('p', { style: styles.hint }, t('host.projectsHint')),
+            h('button', {
+              style: styles.button,
+              disabled: serverBusy,
+              onClick: openServerProjects,
+            }, t('host.projectsButton'))),
         ) : null,
 
         showClient ? h('section', { style: styles.section },
@@ -1237,6 +1298,33 @@ window.__ModuleLoader__.load({
           ? h('p', { style: styles.updateAvailable }, t('update.reinstall'))
           : null,
         h('p', { style: styles.hint }, `Session sync v${status?.pluginVersion ?? '?'} · protocol ${status?.protocol ?? '?'}`),
+        serverOpen ? h('div', {
+          style: projectStyles.overlay,
+          onClick: () => setServerOpen(false),
+        }, h('div', {
+          style: { ...projectStyles.modal, maxHeight: '70vh', overflow: 'auto' },
+          role: 'dialog',
+          'aria-modal': 'true',
+          'aria-label': t('server.title'),
+          onClick: (event) => event.stopPropagation(),
+        },
+          h('div', { style: projectStyles.header },
+            h('h3', { style: projectStyles.title }, t('server.title')),
+            h('button', {
+              type: 'button',
+              style: projectStyles.close,
+              onClick: () => setServerOpen(false),
+            }, t('server.close'))),
+          serverError ? h('p', { style: projectStyles.hint }, serverError) : null,
+          serverBusy ? h('p', { style: projectStyles.hint }, '…') : null,
+          !serverBusy && !serverError && serverProjects.length === 0
+            ? h('p', { style: projectStyles.hint }, t('host.projectsEmpty'))
+            : null,
+          serverProjects.map((project) => h('div', { key: project.id, style: projectStyles.row },
+            h('div', { style: { display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: '1 1 auto' } },
+              h('span', { style: projectStyles.path, title: project.id }, project.name || project.id),
+              h('span', { style: projectStyles.hint },
+                `${t('server.meta', { version: project.headVersion ?? 0, count: project.checkpointCount ?? 0 })} · ${t('server.updated', { time: project.updatedAt ? new Date(project.updatedAt).toLocaleString(lang) : '-' })}`)))))) : null,
       )
     }
 

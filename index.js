@@ -28,7 +28,7 @@ const PLUGIN_VERSION = require('./package.json').version
 export const name = 'session-sync'
 
 /** Persistence for backfill, commands for setup, and the Web carrier for the settings page API. */
-export const inject = ['sessionPersistence', 'commands', 'webServer', 'connection']
+export const inject = ['sessionPersistence', 'commands', 'webServer', 'connection', 'workspaceRegistry']
 
 const MAX_BUFFER_EVENTS = 2000
 const PUSH_DEBOUNCE_MS = 300
@@ -576,26 +576,26 @@ export async function apply(ctx, raw) {
 
   const listKnownWorkspaces = async () => {
     const seen = new Map()
+    const add = (path, extra = {}) => {
+      const key = String(path ?? '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
+      if (!key || seen.has(key)) return
+      seen.set(key, { path, sessions: 0, lastAt: 0, ...extra })
+    }
     try {
-      const sessions = await ctx.sessionPersistence.list()
-      for (const entry of sessions) {
-        const path = entry.header?.cwd
-        if (typeof path !== 'string' || path.length === 0) continue
-        const item = seen.get(path) ?? { path, sessions: 0, lastAt: 0 }
-        item.sessions += 1
-        item.lastAt = Math.max(item.lastAt, entry.header.createdAt ?? 0)
-        seen.set(path, item)
+      // Only DSH's saved workspace records belong in the list; a session cwd
+      // that was never saved as a Workspace is not a workspace entry.
+      for (const workspace of ctx.workspaceRegistry?.list?.() ?? []) {
+        add(workspace.path, {
+          sessions: Array.isArray(workspace.sessionIds) ? workspace.sessionIds.length : 0,
+          lastAt: Date.parse(workspace.updatedAt) || 0,
+        })
       }
     } catch {
-      // A missing session list just leaves the workspace list empty.
+      // A missing registry still leaves the configured default and selection.
     }
     const ui = await readUi()
-    if (ui.workspacePath && !seen.has(ui.workspacePath)) {
-      seen.set(ui.workspacePath, { path: ui.workspacePath, sessions: 0, lastAt: 0 })
-    }
-    if (!seen.has(config.defaultWorkspace)) {
-      seen.set(config.defaultWorkspace, { path: config.defaultWorkspace, sessions: 0, lastAt: 0 })
-    }
+    if (ui.workspacePath) add(ui.workspacePath)
+    add(config.defaultWorkspace)
     const workspaces = []
     for (const item of seen.values()) {
       let marker
@@ -610,7 +610,6 @@ export async function apply(ctx, raw) {
         folderId: marker?.folderId ?? null,
       })
     }
-    workspaces.sort((a, b) => (b.lastAt - a.lastAt) || a.path.localeCompare(b.path))
     return workspaces
   }
 
